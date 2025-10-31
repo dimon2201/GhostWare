@@ -9,6 +9,6 @@ Lightweight C++11 game engine
 - PhysX physics
 - Assimp model loading
 - OpenGL rendering backend
-- Weighted blended transparency rendering
 - OpenAL sound backend
+- Weighted blended transparency rendering
 - Texture atlas
