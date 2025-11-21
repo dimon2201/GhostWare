@@ -17,7 +17,7 @@ namespace realware
 
     namespace render
     {
-        struct sTextureAtlasTexture;
+        class cTextureAtlasTexture;
 
         struct sGPUResource
         {
@@ -127,7 +127,7 @@ namespace realware
                 std::vector<sBuffer*> InputBuffers = {};
                 std::vector<sTexture*> InputTextures = {};
                 std::vector<std::string> InputTextureNames = {};
-                std::vector<sTextureAtlasTexture*> InputTextureAtlasTextures = {};
+                std::vector<cTextureAtlasTexture*> InputTextureAtlasTextures = {};
                 std::vector<std::string> InputTextureAtlasTextureNames = {};
                 sShader* Shader = nullptr;
                 sShader* ShaderBase = nullptr;

@@ -55,17 +55,22 @@ namespace realware
             World = transform.World;
         }
 
-        sMaterialInstance::sMaterialInstance(s32 materialIndex, const sMaterial* const material)
+        cMaterialInstance::cMaterialInstance(const s32 materialIndex, const cMaterial* const material)
         {
-            BufferIndex = materialIndex;
-            DiffuseColor = material->DiffuseColor;
-            HighlightColor = material->HighlightColor;
-        }
+            _bufferIndex = materialIndex;
+            _diffuseColor = material->GetDiffuseColor();
+            _highlightColor = material->GetHighlightColor();
 
-        void sMaterialInstance::SetDiffuseTexture(const sTextureAtlasTexture& area)
-        {
-            DiffuseTextureLayerInfo = area.Offset.z;
-            DiffuseTextureInfo = glm::vec4(area.Offset.x, area.Offset.y, area.Size.x, area.Size.y);
+            cTextureAtlasTexture* diffuse = material->GetDiffuseTexture();
+            if (diffuse)
+            {
+                _diffuseTextureLayerInfo = diffuse->GetOffset().z;
+                _diffuseTextureInfo = glm::vec4(diffuse->GetOffset().x, diffuse->GetOffset().y, diffuse->GetSize().x, diffuse->GetSize().y);
+            }
+            else
+            {
+                _diffuseTextureLayerInfo = -1.0f;
+            }
         }
 
         sLightInstance::sLightInstance(const cGameObject* const object)
@@ -93,7 +98,7 @@ namespace realware
             _maxOpaqueInstanceBufferByteSize = desc->MaxRenderOpaqueInstanceCount * sizeof(sRenderInstance);
             _maxTransparentInstanceBufferByteSize = desc->MaxRenderTransparentInstanceCount * sizeof(sRenderInstance);
             _maxTextInstanceBufferByteSize = desc->MaxRenderTextInstanceCount * sizeof(sRenderInstance);
-            _maxMaterialBufferByteSize = desc->MaxMaterialCount * sizeof(sMaterialInstance);
+            _maxMaterialBufferByteSize = desc->MaxMaterialCount * sizeof(cMaterialInstance);
             _maxLightBufferByteSize = desc->MaxLightCount * sizeof(sLightInstance);
             _maxTextureAtlasTexturesBufferByteSize = desc->MaxTextureAtlasTextureCount * sizeof(sTextureAtlasTextureGPU);
 
@@ -139,8 +144,8 @@ namespace realware
             _opaqueTextureAtlasTexturesByteSize = 0;
             _transparentTextureAtlasTextures = memoryPool->Allocate(_maxTextureAtlasTexturesBufferByteSize);
             _transparentTextureAtlasTexturesByteSize = 0;
-            std::unordered_map<render::sMaterial*, s32>* pMaterialsMap = (std::unordered_map<render::sMaterial*, s32>*)_app->GetMemoryPool()->Allocate(sizeof(std::unordered_map<render::sMaterial*, s32>));
-            _materialsMap = new (pMaterialsMap) std::unordered_map<render::sMaterial*, s32>();
+            std::unordered_map<render::cMaterial*, s32>* pMaterialsMap = (std::unordered_map<render::cMaterial*, s32>*)_app->GetMemoryPool()->Allocate(sizeof(std::unordered_map<render::cMaterial*, s32>));
+            _materialsMap = new (pMaterialsMap) std::unordered_map<render::cMaterial*, s32>();
 
             sTexture* color = _context->CreateTexture(windowSize.x, windowSize.y, 0, render::sTexture::eType::TEXTURE_2D, render::sTexture::eFormat::RGBA8, nullptr);
             sTexture* accumulation = _context->CreateTexture(windowSize.x, windowSize.y, 0, render::sTexture::eType::TEXTURE_2D, render::sTexture::eFormat::RGBA16F, nullptr);
@@ -263,7 +268,7 @@ namespace realware
             _context->DestroyBuffer(_textInstanceBuffer);
             _context->DestroyBuffer(_transparentInstanceBuffer);
             _context->DestroyBuffer(_opaqueInstanceBuffer);
-            _materialsMap->~unordered_map<render::sMaterial*, s32>();
+            _materialsMap->~unordered_map<render::cMaterial*, s32>();
             memoryPool->Free(_materialsMap);
             memoryPool->Free(_vertices);
             memoryPool->Free(_indices);
@@ -272,7 +277,7 @@ namespace realware
             memoryPool->Free(_opaqueInstances);
         }
 
-        sMaterial* mRender::CreateMaterial(const std::string& id, const sTextureAtlasTexture* const diffuseTexture, const glm::vec4& diffuseColor, const glm::vec4& highlightColor, const Category& customShaderRenderPath, const std::string& customVertexFuncPath, const std::string& customFragmentFuncPath)
+        cMaterial* mRender::CreateMaterial(const std::string& id, const cTextureAtlasTexture* const diffuseTexture, const glm::vec4& diffuseColor, const glm::vec4& highlightColor, const Category& customShaderRenderPath, const std::string& customVertexFuncPath, const std::string& customFragmentFuncPath)
         {
             sShader* customShader = nullptr;
             if (customVertexFuncPath != "" || customFragmentFuncPath != "")
@@ -290,16 +295,16 @@ namespace realware
             return _materialsCPU.Add(id, diffuseTexture, diffuseColor, highlightColor, customShader);
         }
 
-        sMaterial* mRender::FindMaterial(const std::string& id)
+        cMaterial* mRender::FindMaterial(const std::string& id)
         {
             return _materialsCPU.Find(id);
         }
 
         void mRender::DestroyMaterial(const std::string& id)
         {
-            sMaterial* const material = _materialsCPU.Find(id);
-            if (material->CustomShader != nullptr)
-                _context->DestroyShader(material->CustomShader);
+            cMaterial* const material = _materialsCPU.Find(id);
+            if (material->GetCustomShader() != nullptr)
+                _context->DestroyShader(material->GetCustomShader());
 
             _materialsCPU.Delete(id);
         }
@@ -427,7 +432,7 @@ namespace realware
             _opaqueTextureAtlasTexturesByteSize = 0;
             _materialsMap->clear();
 
-            auto& objectsArray = objects.GetObjects();
+            auto objectsArray = objects.GetObjects();
 
             for (usize i = 0; i < objects.GetObjectCount(); i++)
             {
@@ -437,7 +442,7 @@ namespace realware
                 transform.Transform();
 
                 s32 materialIndex = -1;
-                sMaterial* material = go.GetMaterial();
+                cMaterial* material = go.GetMaterial();
                 sVertexBufferGeometry* geometry = go.GetGeometry();
 
                 if (geometry == nullptr)
@@ -450,21 +455,12 @@ namespace realware
                     {
                         materialIndex = _materialsMap->size();
 
-                        sMaterialInstance mi(materialIndex, material);
-                        if (material->DiffuseTexture)
-                        {
-                            sTextureAtlasTexture* frame = material->DiffuseTexture;
-                            mi.SetDiffuseTexture(*frame);
-                        }
-                        else
-                        {
-                            mi.DiffuseTextureLayerInfo = -1.0f;
-                        }
-
+                        cMaterialInstance mi(materialIndex, material);
+                        
                         _materialsMap->insert({ material, materialIndex });
 
-                        memcpy((void*)((usize)_opaqueMaterials + (usize)_opaqueMaterialsByteSize), &mi, sizeof(sMaterialInstance));
-                        _opaqueMaterialsByteSize += sizeof(sMaterialInstance);
+                        memcpy((void*)((usize)_opaqueMaterials + (usize)_opaqueMaterialsByteSize), &mi, sizeof(cMaterialInstance));
+                        _opaqueMaterialsByteSize += sizeof(cMaterialInstance);
                     }
                     else
                     {
@@ -480,17 +476,17 @@ namespace realware
                 _opaqueInstanceCount += 1;
             }
 
-            std::vector<sTextureAtlasTexture*>& renderPassTextureAtlasTextures = renderPass->Desc.InputTextureAtlasTextures;
+            std::vector<cTextureAtlasTexture*>& renderPassTextureAtlasTextures = renderPass->Desc.InputTextureAtlasTextures;
             for (auto& textureAtlasTexture : renderPassTextureAtlasTextures)
             {
                 sTextureAtlasTextureGPU tatGPU;
                 tatGPU.TextureInfo = glm::vec4(
-                    textureAtlasTexture->Offset.x,
-                    textureAtlasTexture->Offset.y,
-                    textureAtlasTexture->Size.x,
-                    textureAtlasTexture->Size.y
+                    textureAtlasTexture->GetOffset().x,
+                    textureAtlasTexture->GetOffset().y,
+                    textureAtlasTexture->GetSize().x,
+                    textureAtlasTexture->GetSize().y
                 );
-                tatGPU.TextureLayerInfo = textureAtlasTexture->Offset.z;
+                tatGPU.TextureLayerInfo = textureAtlasTexture->GetOffset().z;
 
                 memcpy((void*)((usize)_opaqueTextureAtlasTextures + (usize)_opaqueTextureAtlasTexturesByteSize), &tatGPU, sizeof(sTextureAtlasTextureGPU));
                 _opaqueTextureAtlasTexturesByteSize += sizeof(sTextureAtlasTextureGPU);
@@ -508,7 +504,7 @@ namespace realware
             _transparentMaterialsByteSize = 0;
             _materialsMap->clear();
 
-            auto& objectsArray = objects.GetObjects();
+            auto objectsArray = objects.GetObjects();
 
             for (usize i = 0; i < objects.GetObjectCount(); i++)
             {
@@ -518,7 +514,7 @@ namespace realware
                 transform.Transform();
 
                 s32 materialIndex = -1;
-                sMaterial* material = go.GetMaterial();
+                cMaterial* material = go.GetMaterial();
                 sVertexBufferGeometry* geometry = go.GetGeometry();
 
                 if (geometry == nullptr)
@@ -531,21 +527,12 @@ namespace realware
                     {
                         materialIndex = _materialsMap->size();
 
-                        sMaterialInstance mi(materialIndex, material);
-                        if (material->DiffuseTexture != nullptr)
-                        {
-                            sTextureAtlasTexture* frame = material->DiffuseTexture;
-                            mi.SetDiffuseTexture(*frame);
-                        }
-                        else
-                        {
-                            mi.DiffuseTextureLayerInfo = -1.0f;
-                        }
-
+                        cMaterialInstance mi(materialIndex, material);
+                        
                         _materialsMap->insert({ material, materialIndex });
 
-                        memcpy((void*)((usize)_transparentMaterials + (usize)_transparentMaterialsByteSize), &mi, sizeof(sMaterialInstance));
-                        _transparentMaterialsByteSize += sizeof(sMaterialInstance);
+                        memcpy((void*)((usize)_transparentMaterials + (usize)_transparentMaterialsByteSize), &mi, sizeof(cMaterialInstance));
+                        _transparentMaterialsByteSize += sizeof(cMaterialInstance);
                     }
                     else
                     {
@@ -561,17 +548,17 @@ namespace realware
                 _transparentInstanceCount += 1;
             }
 
-            std::vector<sTextureAtlasTexture*>& renderPassTextureAtlasTextures = renderPass->Desc.InputTextureAtlasTextures;
+            std::vector<cTextureAtlasTexture*>& renderPassTextureAtlasTextures = renderPass->Desc.InputTextureAtlasTextures;
             for (auto& textureAtlasTexture : renderPassTextureAtlasTextures)
             {
                 sTextureAtlasTextureGPU tatGPU;
                 tatGPU.TextureInfo = glm::vec4(
-                    textureAtlasTexture->Offset.x,
-                    textureAtlasTexture->Offset.y,
-                    textureAtlasTexture->Size.x,
-                    textureAtlasTexture->Size.y
+                    textureAtlasTexture->GetOffset().x,
+                    textureAtlasTexture->GetOffset().y,
+                    textureAtlasTexture->GetSize().x,
+                    textureAtlasTexture->GetSize().y
                 );
-                tatGPU.TextureLayerInfo = textureAtlasTexture->Offset.z;
+                tatGPU.TextureLayerInfo = textureAtlasTexture->GetOffset().z;
 
                 memcpy((void*)((usize)_transparentTextureAtlasTextures + (usize)_transparentTextureAtlasTexturesByteSize), &tatGPU, sizeof(sTextureAtlasTextureGPU));
                 _transparentTextureAtlasTexturesByteSize += sizeof(sTextureAtlasTextureGPU);
@@ -748,10 +735,9 @@ namespace realware
                     actualCharCount += 1;
                 }
 
-                sMaterial* material = it.GetMaterial();
-                sMaterialInstance mi(0, material);
-                memcpy(_textMaterials, &mi, sizeof(sMaterialInstance));
-                _textMaterialsByteSize += sizeof(sMaterialInstance);
+                cMaterialInstance mi(0, it.GetMaterial());
+                memcpy(_textMaterials, &mi, sizeof(cMaterialInstance));
+                _textMaterialsByteSize += sizeof(cMaterialInstance);
 
                 _context->WriteBuffer(_textInstanceBuffer, 0, _textInstancesByteSize, _textInstances);
                 _context->WriteBuffer(_textMaterialBuffer, 0, _textMaterialsByteSize, _textMaterials);

@@ -73,7 +73,7 @@ namespace realware
             delete _allocator;
         }
 
-        sSimulationScene* mPhysics::CreateScene(const std::string& id, const glm::vec3& gravity)
+        cSimulationScene* mPhysics::CreateScene(const std::string& id, const glm::vec3& gravity)
         {
             PxSceneDesc sceneDesc(_physics->getTolerancesScale());
             sceneDesc.gravity = PxVec3(gravity.y, gravity.x, gravity.z);
@@ -87,14 +87,14 @@ namespace realware
             return _scenes.Add(id, scene, controllerManager);
         }
 
-        sSubstance* mPhysics::CreateSubstance(const std::string& id, const glm::vec3& params)
+        cSubstance* mPhysics::CreateSubstance(const std::string& id, const glm::vec3& params)
         {
             PxMaterial* material = _physics->createMaterial(params.x, params.y, params.z); // (staticFriction, dynamicFriction, restitution)
 
             return _substances.Add(id, material);
         }
 
-        sController* mPhysics::CreateController(const std::string& id, const f32 eyeHeight, const f32 height, const f32 radius, const render::sTransform* const transform, const glm::vec3& up, const sSimulationScene* const scene, const sSubstance* const substance)
+        cController* mPhysics::CreateController(const std::string& id, const f32 eyeHeight, const f32 height, const f32 radius, const render::sTransform* const transform, const glm::vec3& up, const cSimulationScene* const scene, const cSubstance* const substance)
         {
             glm::vec3 position = transform->Position;
 
@@ -107,14 +107,14 @@ namespace realware
             desc.slopeLimit = cosf(PxPi / 4.0f);
             desc.contactOffset = 0.01f;
             desc.upDirection = PxVec3(up.y, up.x, up.z);
-            desc.material = substance->Substance;
+            desc.material = substance->GetSubstance();
 
-            PxController* controller = scene->ControllerManager->createController(desc);
+            PxController* controller = scene->GetControllerManager()->createController(desc);
 
             return _controllers.Add(id, controller, eyeHeight);
         }
 
-        sActor* mPhysics::CreateActor(const std::string& id, const Category& staticOrDynamic, const Category& shapeType, const sSimulationScene* const scene, const sSubstance* const substance, const f32 mass, const sTransform* const transform, const cGameObject* const gameObject)
+        cActor* mPhysics::CreateActor(const std::string& id, const Category& staticOrDynamic, const Category& shapeType, const cSimulationScene* const scene, const cSubstance* const substance, const f32 mass, const sTransform* const transform, const cGameObject* const gameObject)
         {
             glm::vec3 position = transform->Position;
             glm::vec3 scale = transform->Scale;
@@ -123,9 +123,9 @@ namespace realware
             
             PxShape* shape = nullptr;
             if (shapeType == Category::PHYSICS_SHAPE_PLANE)
-                shape = _physics->createShape(PxPlaneGeometry(), *substance->Substance, false, PxShapeFlag::eSIMULATION_SHAPE | PxShapeFlag::eSCENE_QUERY_SHAPE);
+                shape = _physics->createShape(PxPlaneGeometry(), *substance->GetSubstance(), false, PxShapeFlag::eSIMULATION_SHAPE | PxShapeFlag::eSCENE_QUERY_SHAPE);
             else if (shapeType == Category::PHYSICS_SHAPE_BOX)
-                shape = _physics->createShape(PxBoxGeometry(scale.y * 0.5f, scale.x * 0.5f, scale.z * 0.5f), *substance->Substance, false, PxShapeFlag::eSIMULATION_SHAPE | PxShapeFlag::eSCENE_QUERY_SHAPE);
+                shape = _physics->createShape(PxBoxGeometry(scale.y * 0.5f, scale.x * 0.5f, scale.z * 0.5f), *substance->GetSubstance(), false, PxShapeFlag::eSIMULATION_SHAPE | PxShapeFlag::eSCENE_QUERY_SHAPE);
 
             if (shape == nullptr)
                 return nullptr;
@@ -152,27 +152,27 @@ namespace realware
                 shape->release();
 
             if (actor != nullptr)
-                scene->Scene->addActor(*actor);
+                scene->GetScene()->addActor(*actor);
 
             return _actors.Add(id, gameObject, actor, staticOrDynamic);
         }
 
-        sSimulationScene* mPhysics::FindScene(const std::string& id)
+        cSimulationScene* mPhysics::FindScene(const std::string& id)
         {
             return _scenes.Find(id);
         }
 
-        sSubstance* mPhysics::FindSubstance(const std::string& id)
+        cSubstance* mPhysics::FindSubstance(const std::string& id)
         {
             return _substances.Find(id);
         }
 
-        sActor* mPhysics::FindActor(const std::string& id)
+        cActor* mPhysics::FindActor(const std::string& id)
         {
             return _actors.Find(id);
         }
 
-        sController* mPhysics::FindController(const std::string& id)
+        cController* mPhysics::FindController(const std::string& id)
         {
             return _controllers.Find(id);
         }
@@ -197,9 +197,9 @@ namespace realware
             _controllers.Delete(id);
         }
 
-        void mPhysics::MoveController(const sController* const controller, const glm::vec3& position, const f32 minStep)
+        void mPhysics::MoveController(const cController* const controller, const glm::vec3& position, const f32 minStep)
         {
-            PxController* pxController = controller->Controller;
+            PxController* pxController = controller->GetController();
             f32 deltaTime = _app->GetDeltaTime();
 
             PxControllerFilters filters = PxControllerFilters();
@@ -211,27 +211,27 @@ namespace realware
             );
         }
 
-        glm::vec3 mPhysics::GetControllerPosition(const sController* const controller)
+        glm::vec3 mPhysics::GetControllerPosition(const cController* const controller)
         {
-            PxController* pxController = controller->Controller;
+            PxController* pxController = controller->GetController();
             PxExtendedVec3 position = pxController->getPosition();
 
-            return glm::vec3(position.y, position.x + controller->EyeHeight, position.z);
+            return glm::vec3(position.y, position.x + controller->GetEyeHeight(), position.z);
         }
 
         void mPhysics::Simulate()
         {
-            auto& actorsArray = _actors.GetObjects();
+            auto actorsArray = _actors.GetObjects();
 
             for (usize i = 0; i < _actors.GetObjectCount(); i++)
             {
                 auto& pair = actorsArray[i];
 
-                if (pair.Type != Category::PHYSICS_ACTOR_DYNAMIC)
+                if (pair.GetType() != Category::PHYSICS_ACTOR_DYNAMIC)
                     continue;
 
-                sTransform* const transform = pair.GameObject->GetTransform();
-                PxActor* const pxActor = pair.Actor;
+                sTransform* const transform = pair.GetGameObject()->GetTransform();
+                PxActor* const pxActor = pair.GetActor();
 
                 const PxTransform actorTransform = ((PxRigidDynamic*)pxActor)->getGlobalPose();
                 const glm::quat q = glm::quat(
@@ -249,11 +249,11 @@ namespace realware
                 }
             }
 
-            auto& scenesArray = _scenes.GetObjects();
+            auto scenesArray = _scenes.GetObjects();
 
             for (usize i = 0; i < _scenes.GetObjectCount(); i++)
             {
-                PxScene* const scene = scenesArray[i].Scene;
+                PxScene* const scene = scenesArray[i].GetScene();
                 scene->simulate(1.0f / 60.0f);
                 scene->fetchResults(true);
             }

@@ -24,7 +24,7 @@ namespace realware
 
     namespace render
     {
-        struct sTextureAtlasTexture;
+        class cTextureAtlasTexture;
     }
 
     namespace render
@@ -95,22 +95,28 @@ namespace realware
             glm::mat4 World = glm::mat4(1.0f);
         };
 
-        struct sMaterial : public utils::sIdVecObject
+        class cMaterial : public cIdVecObject
         {
-            sMaterial() = default;
-            explicit sMaterial(const render::sTextureAtlasTexture* const diffuseTexture, const glm::vec4& diffuseColor, const glm::vec4& highlightColor, const sShader* const customShader)
-                : DiffuseTexture((render::sTextureAtlasTexture*)diffuseTexture), DiffuseColor(diffuseColor), HighlightColor(highlightColor), CustomShader((sShader*)customShader) {}
-            ~sMaterial() = default;
+        public:
+            explicit cMaterial(const std::string& id, const app::cApplication* const app, const render::cTextureAtlasTexture* const diffuseTexture, const glm::vec4& diffuseColor, const glm::vec4& highlightColor, const sShader* const customShader)
+                : cIdVecObject(id, app), _diffuseTexture((render::cTextureAtlasTexture*)diffuseTexture), _diffuseColor(diffuseColor), _highlightColor(highlightColor), _customShader((sShader*)customShader) {}
+            ~cMaterial() = default;
 
-            render::sShader* CustomShader = nullptr;
-            render::sTextureAtlasTexture* DiffuseTexture = nullptr;
-            glm::vec4 DiffuseColor = glm::vec4(1.0f);
-            glm::vec4 HighlightColor = glm::vec4(1.0f);
+            inline render::sShader* GetCustomShader() const { return _customShader; }
+            inline render::cTextureAtlasTexture* GetDiffuseTexture() const { return _diffuseTexture; }
+            inline const glm::vec4& GetDiffuseColor() const { return _diffuseColor; }
+            inline const glm::vec4& GetHighlightColor() const { return _highlightColor; }
+
+        private:
+            render::sShader* _customShader = nullptr;
+            render::cTextureAtlasTexture* _diffuseTexture = nullptr;
+            glm::vec4 _diffuseColor = glm::vec4(1.0f);
+            glm::vec4 _highlightColor = glm::vec4(1.0f);
         };
 
         struct sRenderInstance
         {
-            sRenderInstance(types::s32 materialIndex, const sTransform& transform);
+            sRenderInstance(const types::s32 materialIndex, const sTransform& transform);
 
             types::f32 Use2D = 0.0f;
             types::s32 MaterialIndex = -1;
@@ -124,20 +130,20 @@ namespace realware
             glm::vec4 AtlasInfo = glm::vec4(0.0f);
         };
 
-        struct sMaterialInstance
+        class cMaterialInstance
         {
-            sMaterialInstance(types::s32 materialIndex, const sMaterial* const material);
+        public:
+            cMaterialInstance(const types::s32 materialIndex, const cMaterial* const material);
 
-            void SetDiffuseTexture(const render::sTextureAtlasTexture& area);
-
-            types::s32 BufferIndex = -1;
-            types::f32 DiffuseTextureLayerInfo = 0.0f;
-            types::f32 MetallicTextureLayerInfo = 0.0f;
-            types::f32 RoughnessTextureLayerInfo = 0.0f;
-            types::f32 UserData[4] = {};
-            glm::vec4 DiffuseTextureInfo = glm::vec4(0.0f);
-            glm::vec4 DiffuseColor = glm::vec4(0.0f);
-            glm::vec4 HighlightColor = glm::vec4(0.0f);
+        private:
+            types::s32 _bufferIndex = -1;
+            types::f32 _diffuseTextureLayerInfo = 0.0f;
+            types::f32 _metallicTextureLayerInfo = 0.0f;
+            types::f32 _roughnessTextureLayerInfo = 0.0f;
+            types::f32 _userData[4] = {};
+            glm::vec4 _diffuseTextureInfo = glm::vec4(0.0f);
+            glm::vec4 _diffuseColor = glm::vec4(0.0f);
+            glm::vec4 _highlightColor = glm::vec4(0.0f);
         };
 
         struct sLightInstance
@@ -156,8 +162,8 @@ namespace realware
             explicit mRender(const app::cApplication* const app, const iRenderContext* const context);
             ~mRender();
 
-            sMaterial* CreateMaterial(const std::string& id, const render::sTextureAtlasTexture* const diffuseTexture, const glm::vec4& diffuseColor, const glm::vec4& highlightColor, const game::Category& customShaderRenderPath = game::Category::RENDER_PATH_OPAQUE, const std::string& customVertexFuncPath = "", const std::string& customFragmentFuncPath = "");
-            sMaterial* FindMaterial(const std::string& id);
+            cMaterial* CreateMaterial(const std::string& id, const render::cTextureAtlasTexture* const diffuseTexture, const glm::vec4& diffuseColor, const glm::vec4& highlightColor, const game::Category& customShaderRenderPath = game::Category::RENDER_PATH_OPAQUE, const std::string& customVertexFuncPath = "", const std::string& customFragmentFuncPath = "");
+            cMaterial* FindMaterial(const std::string& id);
             void DestroyMaterial(const std::string& id);
             sVertexArray* CreateDefaultVertexArray();
             sVertexBufferGeometry* CreateGeometry(const game::Category& format, const types::usize verticesByteSize, const void* const vertices, const types::usize indicesByteSize, const void* const indices);
@@ -169,8 +175,8 @@ namespace realware
             
             void UpdateLights();
 
-            void WriteObjectsToOpaqueBuffers(utils::cIdVec<game::cGameObject>& objects, sRenderPass* const renderPass);
-            void WriteObjectsToTransparentBuffers(utils::cIdVec<game::cGameObject>& objects, sRenderPass* const renderPass);
+            void WriteObjectsToOpaqueBuffers(cIdVec<game::cGameObject>& objects, sRenderPass* const renderPass);
+            void WriteObjectsToTransparentBuffers(cIdVec<game::cGameObject>& objects, sRenderPass* const renderPass);
             void DrawGeometryOpaque(const sVertexBufferGeometry* const geometry, const game::cGameObject* const cameraObject, sRenderPass* const renderPass);
             void DrawGeometryOpaque(const sVertexBufferGeometry* const geometry, const game::cGameObject* const cameraObject, sShader* const singleShader = nullptr);
             void DrawGeometryTransparent(const sVertexBufferGeometry* const geometry, const std::vector<game::cGameObject>& objects, const game::cGameObject* const cameraObject, sRenderPass* const renderPass);
@@ -254,7 +260,7 @@ namespace realware
             types::usize _transparentTextureAtlasTexturesByteSize = 0;
             void* _textTextureAtlasTextures = nullptr;
             types::usize _textTextureAtlasTexturesByteSize = 0;
-            std::unordered_map<render::sMaterial*, types::s32>* _materialsMap = {};
+            std::unordered_map<render::cMaterial*, types::s32>* _materialsMap = {};
             sRenderPass* _opaque = nullptr;
             sRenderPass* _transparent = nullptr;
             sRenderPass* _text = nullptr;
@@ -263,7 +269,7 @@ namespace realware
             sRenderTarget* _opaqueRenderTarget = nullptr;
             sRenderTarget* _transparentRenderTarget = nullptr;
             types::usize _materialCountCPU = 0;
-            utils::cIdVec<sMaterial> _materialsCPU;
+            cIdVec<cMaterial> _materialsCPU;
         };
     }
 }

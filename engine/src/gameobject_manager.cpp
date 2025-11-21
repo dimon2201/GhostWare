@@ -18,7 +18,7 @@ namespace realware
 
     namespace game
     {
-        cGameObject::cGameObject(const cMemoryPool* const memoryPool)
+        cGameObject::cGameObject(const std::string& id, const app::cApplication* app, const cMemoryPool* const memoryPool) : cIdVecObject(id, app)
         {
             sTransform* pTransform = (sTransform*)(((cMemoryPool*)memoryPool)->Allocate(sizeof(sTransform)));
             _transform = new (pTransform) sTransform();
@@ -54,9 +54,9 @@ namespace realware
             _transform->Scale = scale;
         }
 
-        void cGameObject::SetPhysicsActor(const Category& staticOrDynamic, const Category& shapeType, const sSimulationScene* const scene, const sSubstance* const substance, const f32 mass)
+        void cGameObject::SetPhysicsActor(const Category& staticOrDynamic, const Category& shapeType, const cSimulationScene* const scene, const cSubstance* const substance, const f32 mass)
         {
-            mPhysics* physics = App->GetPhysicsManager();
+            mPhysics* physics = _app->GetPhysicsManager();
             _actor = physics->CreateActor(
                 GetID(),
                 staticOrDynamic,
@@ -69,10 +69,9 @@ namespace realware
             );
         }
 
-        void cGameObject::SetPhysicsController(const f32 eyeHeight, const f32 height, const f32 radius, const glm::vec3& up, const sSimulationScene* const scene, const sSubstance* const substance)
+        void cGameObject::SetPhysicsController(const f32 eyeHeight, const f32 height, const f32 radius, const glm::vec3& up, const cSimulationScene* const scene, const cSubstance* const substance)
         {
-            mPhysics* physics = App->GetPhysicsManager();
-
+            mPhysics* physics = _app->GetPhysicsManager();
             _controller = physics->CreateController(
                 GetID(),
                 eyeHeight,

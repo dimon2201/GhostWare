@@ -15,6 +15,7 @@ namespace realware
     using namespace app;
     using namespace game;
     using namespace log;
+    using namespace types;
     using namespace utils;
 
     namespace sound
@@ -134,33 +135,35 @@ namespace realware
             }
         }
 
-        void cOpenALSoundContext::Destroy(sSound* sound)
+        void cOpenALSoundContext::Destroy(cSound* sound)
         {
-            alDeleteBuffers(1, (ALuint*)&sound->Buffer);
-            alDeleteSources(1, (ALuint*)&sound->Source);
+            u32 buffer = sound->GetBuffer();
+            u32 source = sound->GetSource();
+            alDeleteBuffers(1, (ALuint*)&buffer);
+            alDeleteSources(1, (ALuint*)&source);
 
-            sound->~sSound();
+            sound->~cSound();
             _app->GetMemoryPool()->Free(sound);
         }
 
-        void cOpenALSoundContext::Play(const sSound* const sound)
+        void cOpenALSoundContext::Play(const cSound* const sound)
         {
-            alSourcePlay(sound->Source);
+            alSourcePlay(sound->GetSource());
         }
 
-        void cOpenALSoundContext::Stop(const sSound* const sound)
+        void cOpenALSoundContext::Stop(const cSound* const sound)
         {
-            alSourceStop(sound->Source);
+            alSourceStop(sound->GetSource());
         }
 
-        void cOpenALSoundContext::SetPosition(const sSound* const sound, const glm::vec3& position)
+        void cOpenALSoundContext::SetPosition(const cSound* const sound, const glm::vec3& position)
         {
-            alSource3f(sound->Source, AL_POSITION, position.x, position.y, position.z);
+            alSource3f(sound->GetSource(), AL_POSITION, position.x, position.y, position.z);
         }
 
-        void cOpenALSoundContext::SetVelocity(const sSound* const sound, const glm::vec3& velocity)
+        void cOpenALSoundContext::SetVelocity(const cSound* const sound, const glm::vec3& velocity)
         {
-            alSource3f(sound->Source, AL_VELOCITY, velocity.x, velocity.y, velocity.z);
+            alSource3f(sound->GetSource(), AL_VELOCITY, velocity.x, velocity.y, velocity.z);
         }
 
         void cOpenALSoundContext::SetListenerPosition(const glm::vec3& position)

@@ -15,22 +15,18 @@ namespace realware
 
     namespace sound
     {
-        sSound::sSound(const cApplication* const app, const u32 source, const u32 buffer) : App((cApplication*)app), Source(source), Buffer(buffer)
-        {
-        }
+        cSound::cSound(const std::string& id, const cApplication* const app, const u32 source, const u32 buffer) : cIdVecObject(id, app), _source(source), _buffer(buffer) {}
 
-        sSound::~sSound()
+        cSound::~cSound()
         {
-            if (File != nullptr)
+            if (_file != nullptr)
             {
-                if (Format == Category::SOUND_FORMAT_WAV)
+                if (_format == Category::SOUND_FORMAT_WAV)
                 {
-                    cMemoryPool* const memoryPool = App->GetMemoryPool();
-
-                    memoryPool->Free(File->Data);
-
-                    File->~sWAVStructure();
-                    memoryPool->Free(File);
+                    cMemoryPool* const memoryPool = _app->GetMemoryPool();
+                    memoryPool->Free(_file->Data);
+                    _file->~sWAVStructure();
+                    memoryPool->Free(_file);
                 }
             }
         }
@@ -40,17 +36,17 @@ namespace realware
         {
         }
 
-        sSound* mSound::CreateSound(const std::string& id, const std::string& filename, const game::Category& format)
+        cSound* mSound::CreateSound(const std::string& id, const std::string& filename, const game::Category& format)
         {
             u32 source = 0;
             u32 buffer = 0;
             sWAVStructure* file = nullptr;
             _context->Create(filename, format, (const sWAVStructure** const)&file, source, buffer);
 
-            return _sounds.Add(id, _app, source, buffer);
+            return _sounds.Add(id, source, buffer);
         }
 
-        sSound* mSound::FindSound(const std::string& id)
+        cSound* mSound::FindSound(const std::string& id)
         {
             return _sounds.Find(id);
         }

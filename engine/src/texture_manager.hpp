@@ -20,15 +20,20 @@ namespace realware
         class iRenderContext;
         struct sTexture;
 
-        struct sTextureAtlasTexture : public utils::sIdVecObject
+        class cTextureAtlasTexture : public cIdVecObject
         {
-            sTextureAtlasTexture() = default;
-            sTextureAtlasTexture(const types::boolean isNormalized, const glm::vec3& offset, const glm::vec2& size);
-            ~sTextureAtlasTexture() = default;
+        public:
+            cTextureAtlasTexture(const std::string& id, const app::cApplication* const app, const types::boolean isNormalized, const glm::vec3& offset, const glm::vec2& size);
+            ~cTextureAtlasTexture() = default;
 
-            types::boolean IsNormalized = types::K_FALSE;
-            glm::vec3 Offset = glm::vec3(0.0f);
-            glm::vec2 Size = glm::vec2(0.0f);
+            inline types::boolean IsNormalized() const { return _isNormalized; }
+            inline const glm::vec3& GetOffset() const { return _offset; }
+            inline const glm::vec2& GetSize() const { return _size; }
+
+        private:
+            types::boolean _isNormalized = types::K_FALSE;
+            glm::vec3 _offset = glm::vec3(0.0f);
+            glm::vec2 _size = glm::vec2(0.0f);
         };
 
         struct sTextureAtlasTextureGPU
@@ -43,12 +48,12 @@ namespace realware
             explicit mTexture(const app::cApplication* const app, const iRenderContext* const context);
             ~mTexture();
 
-            sTextureAtlasTexture* CreateTexture(const std::string& id, const glm::vec2& size, const types::usize channels, const types::u8* data);
-            sTextureAtlasTexture* CreateTexture(const std::string& id, const std::string& filename);
-            sTextureAtlasTexture* FindTexture(const std::string& id);
+            cTextureAtlasTexture* CreateTexture(const std::string& id, const glm::vec2& size, const types::usize channels, const types::u8* data);
+            cTextureAtlasTexture* CreateTexture(const std::string& id, const std::string& filename);
+            cTextureAtlasTexture* FindTexture(const std::string& id);
             void DestroyTexture(const std::string& id);
 
-            sTextureAtlasTexture CalculateNormalizedArea(const sTextureAtlasTexture& area);
+            cTextureAtlasTexture CalculateNormalizedArea(const cTextureAtlasTexture& area);
 
             sTexture* GetAtlas();
             types::usize GetWidth() const;
@@ -59,7 +64,7 @@ namespace realware
             app::cApplication* _app = nullptr;
             iRenderContext* _context = nullptr;
             sTexture* _atlas = nullptr;
-            utils::cIdVec<sTextureAtlasTexture> _textures;
+            cIdVec<cTextureAtlasTexture> _textures;
         };
     }
 }

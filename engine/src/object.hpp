@@ -7,8 +7,8 @@ namespace realware
 	class cObject
 	{
 	public:
-		explicit cObject();
-		~cObject();
+		explicit cObject() = default;
+		~cObject() = default;
 
 	private:
 	};

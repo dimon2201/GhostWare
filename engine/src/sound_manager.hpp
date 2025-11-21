@@ -40,17 +40,22 @@ namespace realware
             types::u16* Data;
         };
 
-        struct sSound : public utils::sIdVecObject
+        class cSound : public cIdVecObject
         {
-            sSound() = default;
-            explicit sSound(const app::cApplication* const app, const types::u32 source, const types::u32 buffer);
-            ~sSound();
+        public:
+            explicit cSound(const std::string& id, const app::cApplication* const app, const types::u32 source, const types::u32 buffer);
+            ~cSound();
 
-            app::cApplication* App = nullptr;
-            game::Category Format = game::Category::SOUND_FORMAT_WAV;
-            sWAVStructure* File = nullptr;
-            types::u32 Source = 0;
-            types::u32 Buffer = 0;
+            inline game::Category GetFormat() const { return _format; }
+            inline sWAVStructure* GetFile() const { return _file; }
+            inline types::u32 GetSource() const { return _source; }
+            inline types::u32 GetBuffer() const { return _buffer; }
+
+        private:
+            game::Category _format = game::Category::SOUND_FORMAT_WAV;
+            sWAVStructure* _file = nullptr;
+            types::u32 _source = 0;
+            types::u32 _buffer = 0;
         };
 
         class mSound
@@ -59,14 +64,14 @@ namespace realware
             mSound(const app::cApplication* const app, const iSoundContext* const context);
             ~mSound() = default;
 
-            sSound* CreateSound(const std::string& id, const std::string& filename, const game::Category& format);
-            sSound* FindSound(const std::string& id);
+            cSound* CreateSound(const std::string& id, const std::string& filename, const game::Category& format);
+            cSound* FindSound(const std::string& id);
             void DestroySound(const std::string& id);
 
         private:
             app::cApplication* _app = nullptr;
             iSoundContext* _context = nullptr;
-            utils::cIdVec<sSound> _sounds;
+            cIdVec<cSound> _sounds;
         };
     }
 }

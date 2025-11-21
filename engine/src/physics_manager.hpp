@@ -89,44 +89,60 @@ namespace realware
 			virtual void onAdvance(const physx::PxRigidBody* const* bodyBuffer, const physx::PxTransform* poseBuffer, const physx::PxU32 count) override final {}
         };
 
-        struct sSimulationScene : public utils::sIdVecObject
+        class cSimulationScene : public cIdVecObject
         {
-            sSimulationScene() = default;
-            explicit sSimulationScene(const physx::PxScene* const scene, const physx::PxControllerManager* const controllerManager) : Scene((physx::PxScene*)scene), ControllerManager((physx::PxControllerManager*)controllerManager) {}
-            ~sSimulationScene() = default;
+        public:
+            explicit cSimulationScene(const std::string& id, const app::cApplication* const app, const physx::PxScene* const scene, const physx::PxControllerManager* const controllerManager) : cIdVecObject(id, app), _scene((physx::PxScene*)scene), _controllerManager((physx::PxControllerManager*)controllerManager) {}
+            ~cSimulationScene() = default;
 
-            physx::PxScene* Scene = nullptr;
-            physx::PxControllerManager* ControllerManager = nullptr;
+            inline physx::PxScene* GetScene() const { return _scene; }
+            inline physx::PxControllerManager* GetControllerManager() const { return _controllerManager; }
+
+        private:
+            physx::PxScene* _scene = nullptr;
+            physx::PxControllerManager* _controllerManager = nullptr;
         };
 
-        struct sSubstance : public utils::sIdVecObject
+        class cSubstance : public cIdVecObject
         {
-            sSubstance() = default;
-            explicit sSubstance(const physx::PxMaterial* const substance) : Substance((physx::PxMaterial*)substance) {}
-            ~sSubstance() = default;
+        public:
+            explicit cSubstance(const std::string& id, const app::cApplication* const app, const physx::PxMaterial* const substance) : cIdVecObject(id, app), _substance((physx::PxMaterial*)substance) {}
+            ~cSubstance() = default;
 
-            physx::PxMaterial* Substance = nullptr;
+            inline physx::PxMaterial* GetSubstance() const { return _substance; }
+
+        private:
+            physx::PxMaterial* _substance = nullptr;
         };
 
-        struct sController : public utils::sIdVecObject
+        class cController : public cIdVecObject
         {
-            sController() = default;
-            explicit sController(const physx::PxController* const controller, const types::f32 eyeHeight) : Controller((physx::PxController*)controller), EyeHeight(eyeHeight) {}
-            ~sController() = default;
+        public:
+            explicit cController(const std::string& id, const app::cApplication* const app, const physx::PxController* const controller, const types::f32 eyeHeight) : cIdVecObject(id, app), _controller((physx::PxController*)controller), _eyeHeight(eyeHeight) {}
+            ~cController() = default;
 
-            physx::PxController* Controller = nullptr;
-            types::f32 EyeHeight = 0.0f;
+            inline physx::PxController* GetController() const { return _controller; }
+            inline types::f32 GetEyeHeight() const { return _eyeHeight; }
+
+        private:
+            physx::PxController* _controller = nullptr;
+            types::f32 _eyeHeight = 0.0f;
         };
 
-        struct sActor : public utils::sIdVecObject
+        class cActor : public cIdVecObject
         {
-            sActor() = default;
-            explicit sActor(const game::cGameObject* const gameObject, const physx::PxActor* const actor, const game::Category& actorType) : GameObject((game::cGameObject*)gameObject), Actor((physx::PxActor*)actor), Type(actorType) {}
-            ~sActor() = default;
+        public:
+            explicit cActor(const std::string& id, const app::cApplication* const app, const game::cGameObject* const gameObject, const physx::PxActor* const actor, const game::Category& actorType) : cIdVecObject(id, app), _gameObject((game::cGameObject*)gameObject), _actor((physx::PxActor*)actor), _type(actorType) {}
+            ~cActor() = default;
 
-            game::cGameObject* GameObject = nullptr;
-            physx::PxActor* Actor = nullptr;
-            game::Category Type = game::Category::PHYSICS_ACTOR_DYNAMIC;
+            inline game::cGameObject* GetGameObject() const { return _gameObject; }
+            inline physx::PxActor* GetActor() const { return _actor; }
+            inline game::Category GetType() const { return _type; }
+
+        private:
+            game::cGameObject* _gameObject = nullptr;
+            physx::PxActor* _actor = nullptr;
+            game::Category _type = game::Category::PHYSICS_ACTOR_DYNAMIC;
         };
 
         class mPhysics
@@ -135,21 +151,21 @@ namespace realware
             explicit mPhysics(const app::cApplication* const app);
             ~mPhysics();
 
-            sSimulationScene* CreateScene(const std::string& id, const glm::vec3& gravity = glm::vec3(0.0f, -9.81f, 0.0f));
-            sSubstance* CreateSubstance(const std::string& id, const glm::vec3& params = glm::vec3(0.5f, 0.5f, 0.6f));
-            sActor* CreateActor(const std::string& id, const game::Category& staticOrDynamic, const game::Category& shapeType, const sSimulationScene* const scene, const sSubstance* const substance, const types::f32 mass, const render::sTransform* const transform, const game::cGameObject* const gameObject);
-            sController* CreateController(const std::string& id, const types::f32 eyeHeight, const types::f32 height, const types::f32 radius, const render::sTransform* const transform, const glm::vec3& up, const sSimulationScene* const scene, const sSubstance* const substance);
-            sSimulationScene* FindScene(const std::string&);
-            sSubstance* FindSubstance(const std::string&);
-            sActor* FindActor(const std::string&);
-            sController* FindController(const std::string&);
+            cSimulationScene* CreateScene(const std::string& id, const glm::vec3& gravity = glm::vec3(0.0f, -9.81f, 0.0f));
+            cSubstance* CreateSubstance(const std::string& id, const glm::vec3& params = glm::vec3(0.5f, 0.5f, 0.6f));
+            cActor* CreateActor(const std::string& id, const game::Category& staticOrDynamic, const game::Category& shapeType, const cSimulationScene* const scene, const cSubstance* const substance, const types::f32 mass, const render::sTransform* const transform, const game::cGameObject* const gameObject);
+            cController* CreateController(const std::string& id, const types::f32 eyeHeight, const types::f32 height, const types::f32 radius, const render::sTransform* const transform, const glm::vec3& up, const cSimulationScene* const scene, const cSubstance* const substance);
+            cSimulationScene* FindScene(const std::string&);
+            cSubstance* FindSubstance(const std::string&);
+            cActor* FindActor(const std::string&);
+            cController* FindController(const std::string&);
             void DestroyScene(const std::string& id);
             void DestroySubstance(const std::string& id);
             void DestroyActor(const std::string& id);
             void DestroyController(const std::string& id);
 
-            void MoveController(const sController* const controller, const glm::vec3& position, const types::f32 minStep = 0.001f);
-            glm::vec3 GetControllerPosition(const sController* const controller);
+            void MoveController(const cController* const controller, const glm::vec3& position, const types::f32 minStep = 0.001f);
+            glm::vec3 GetControllerPosition(const cController* const controller);
 
             void Simulate();
 
@@ -162,10 +178,10 @@ namespace realware
             physx::PxFoundation* _foundation = nullptr;
             physx::PxPhysics* _physics = nullptr;
             std::mutex _mutex;
-            utils::cIdVec<sSimulationScene> _scenes;
-            utils::cIdVec<sSubstance> _substances;
-            utils::cIdVec<sActor> _actors;
-            utils::cIdVec<sController> _controllers;
+            cIdVec<cSimulationScene> _scenes;
+            cIdVec<cSubstance> _substances;
+            cIdVec<cActor> _actors;
+            cIdVec<cController> _controllers;
         };
     }
 }

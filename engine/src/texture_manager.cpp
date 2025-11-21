@@ -19,9 +19,7 @@ namespace realware
 
     namespace render
     {
-        sTextureAtlasTexture::sTextureAtlasTexture(const types::boolean isNormalized, const glm::vec3& offset, const glm::vec2& size) : IsNormalized(isNormalized), Offset(offset), Size(size)
-        {
-        }
+        cTextureAtlasTexture::cTextureAtlasTexture(const std::string& id, const app::cApplication* const app, const types::boolean isNormalized, const glm::vec3& offset, const glm::vec2& size) : cIdVecObject(id, app), _isNormalized(isNormalized), _offset(offset), _size(size) {}
 
         mTexture::mTexture(const cApplication* const app, const iRenderContext* const context) : _app((cApplication*)app), _textures((cApplication*)app, ((cApplication*)app)->GetDesc()->MaxTextureCount)
         {
@@ -44,7 +42,7 @@ namespace realware
             _context->DestroyTexture(_atlas);
         }
 
-        sTextureAtlasTexture* mTexture::CreateTexture(const std::string& id, const glm::vec2& size, const usize channels, const u8* data)
+        cTextureAtlasTexture* mTexture::CreateTexture(const std::string& id, const glm::vec2& size, const usize channels, const u8* data)
         {
             const usize width = size.x;
             const usize height = size.y;
@@ -56,7 +54,8 @@ namespace realware
                 return nullptr;
             }
 
-            const auto& textures = _textures.GetObjects();
+            const auto textures = _textures.GetObjects();
+            const usize texturesCount = _textures.GetObjectCount();
             for (usize layer = 0; layer < _atlas->Depth; layer++)
             {
                 for (usize y = 0; y < _atlas->Height; y++)
@@ -65,31 +64,33 @@ namespace realware
                     {
                         types::boolean isIntersecting = K_FALSE;
 
-                        for (auto& area : textures)
+                        for (usize i = 0; i < texturesCount; i++)
                         {
-                            if (area.IsNormalized == K_FALSE)
+                            const auto& area = textures[i];
+
+                            if (area.IsNormalized() == K_FALSE)
                             {
                                 const glm::vec4 textureRect = glm::vec4(
                                     x, y, x + width, y + height
                                 );
-                                if ((area.Offset.z == layer &&
-                                    area.Offset.x <= textureRect.z && area.Offset.x + area.Size.x >= textureRect.x &&
-                                    area.Offset.y <= textureRect.w && area.Offset.y + area.Size.y >= textureRect.y) ||
+                                if ((area.GetOffset().z == layer &&
+                                    area.GetOffset().x <= textureRect.z && area.GetOffset().x + area.GetSize().x >= textureRect.x &&
+                                    area.GetOffset().y <= textureRect.w && area.GetOffset().y + area.GetSize().y >= textureRect.y) ||
                                     (x + width > _atlas->Width || y + height > _atlas->Height))
                                 {
                                     isIntersecting = K_FALSE;
                                     break;
                                 }
                             }
-                            else if (area.IsNormalized == K_TRUE)
+                            else if (area.IsNormalized() == K_TRUE)
                             {
                                 const glm::vec4 textureRectNorm = glm::vec4(
                                     (f32)x / (f32)_atlas->Width, (f32)y / (f32)_atlas->Height,
                                     ((f32)x + (f32)width) / (f32)_atlas->Width, ((f32)y + (f32)height) / (f32)_atlas->Height
                                 );
-                                if ((area.Offset.z == layer &&
-                                    area.Offset.x <= textureRectNorm.z && area.Offset.x + area.Size.x >= textureRectNorm.x &&
-                                    area.Offset.y <= textureRectNorm.w && area.Offset.y + area.Size.y >= textureRectNorm.y) ||
+                                if ((area.GetOffset().z == layer &&
+                                    area.GetOffset().x <= textureRectNorm.z && area.GetOffset().x + area.GetSize().x >= textureRectNorm.x &&
+                                    area.GetOffset().y <= textureRectNorm.w && area.GetOffset().y + area.GetSize().y >= textureRectNorm.y) ||
                                     (textureRectNorm.z > 1.0f || textureRectNorm.w > 1.0f))
                                 {
                                     isIntersecting = true;
@@ -107,7 +108,7 @@ namespace realware
                             if (_atlas->Format == render::sTexture::eFormat::RGBA8_MIPS)
                                 _context->GenerateTextureMips(_atlas);
 
-                            sTextureAtlasTexture* newTex = _textures.Add(id, K_FALSE, offset, size);
+                            cTextureAtlasTexture* newTex = _textures.Add(id, K_FALSE, offset, size);
                             *newTex = CalculateNormalizedArea(*newTex);
 
                             return newTex;
@@ -119,7 +120,7 @@ namespace realware
             return nullptr;
         }
 
-        sTextureAtlasTexture* mTexture::CreateTexture(const std::string& id, const std::string& filename)
+        cTextureAtlasTexture* mTexture::CreateTexture(const std::string& id, const std::string& filename)
         {
             const usize channelsRequired = 4;
 
@@ -132,7 +133,7 @@ namespace realware
             return CreateTexture(id, glm::vec2(width, height), channelsRequired, data);
         }
 
-        sTextureAtlasTexture* mTexture::FindTexture(const std::string& id)
+        cTextureAtlasTexture* mTexture::FindTexture(const std::string& id)
         {
             return _textures.Find(id);
         }
@@ -142,12 +143,14 @@ namespace realware
             _textures.Delete(id);
         }
 
-        sTextureAtlasTexture mTexture::CalculateNormalizedArea(const sTextureAtlasTexture& area)
+        cTextureAtlasTexture mTexture::CalculateNormalizedArea(const cTextureAtlasTexture& area)
         {
-            sTextureAtlasTexture norm = sTextureAtlasTexture(
+            cTextureAtlasTexture norm = cTextureAtlasTexture(
+                area.GetID(),
+                area.GetApplication(),
                 types::K_TRUE,
-                glm::vec3(area.Offset.x / _atlas->Width, area.Offset.y / _atlas->Height, area.Offset.z),
-                glm::vec2(area.Size.x / _atlas->Width, area.Size.y / _atlas->Height)
+                glm::vec3(area.GetOffset().x / _atlas->Width, area.GetOffset().y / _atlas->Height, area.GetOffset().z),
+                glm::vec2(area.GetSize().x / _atlas->Width, area.GetSize().y / _atlas->Height)
             );
 
             return norm;
