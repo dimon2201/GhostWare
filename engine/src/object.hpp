@@ -11,8 +11,15 @@ namespace realware
 {
 	class cContext;
 
+	using ClassType = std::string;
+
+	#define REALWARE_CLASS(typeName) \
+		public: static ClassType GetType() { return #typeName; }
+
 	class cIdentifier
 	{
+		REALWARE_CLASS(cIdentifier)
+
 	public:
 		using ID = std::string;
 
@@ -26,30 +33,17 @@ namespace realware
 		ID _id = "";
 	};
 
-	class cType
-	{
-	public:
-		using Name = std::string;
-
-	public:
-		cType(const std::string& name) : _name(name) {}
-		~cType() = default;
-
-		inline const Name& GetName() const { return _name; }
-
-	private:
-		Name _name = "";
-	};
-
 	class iObject
 	{
+		REALWARE_CLASS(iObject)
+
 	public:
 		explicit iObject(cContext* context) : _context(context) {}
-		iObject(const iObject& rhs) = delete;
-		iObject& operator=(const iObject& rhs) = delete;
 		virtual ~iObject() = default;
 
-		virtual cType GetType() const = 0;
+		iObject(const iObject& rhs) = delete;
+		iObject& operator=(const iObject& rhs) = delete;
+
 		inline cContext* GetContext() const { return _context; }
 
 	protected:
@@ -58,11 +52,15 @@ namespace realware
 
 	class cFactoryObject : public iObject
 	{
+		REALWARE_CLASS(cFactoryObject)
+
 		friend class iFactory;
 
 	public:
 		explicit cFactoryObject(cContext* context) : iObject(context) {}
 		virtual ~cFactoryObject() = default;
+
+		inline cIdentifier* GetIdentifier() const { return _identifier; }
 
 	protected:
 		types::boolean _occupied = types::K_FALSE;
@@ -72,6 +70,8 @@ namespace realware
 
 	class iFactory : public iObject
 	{
+		REALWARE_CLASS(iFactory)
+
 	public:
 		explicit iFactory(cContext* context) : iObject(context) {}
 		virtual ~iFactory() = default;
@@ -85,24 +85,29 @@ namespace realware
 	template <typename T>
 	class ÒFactory : public iFactory
 	{
+		REALWARE_CLASS(ÒFactory)
+
 	public:
 		explicit ÒFactory(cContext* context) : iFactory(context) {}
 		virtual ~ÒFactory() = default;
 
-		virtual cFactoryObject* Create() override final
-		{
-			if (_counter >= types::K_USIZE_MAX)
-			{
-				Print("Error: can't create object of type!");
-
-				return nullptr;
-			}
-
-			T* object = new T(_context);
-			const std::string id = object->GetType()->GetName() + std::to_string(_counter++);
-			object._identifier = new cIdentifier(id);
-
-			return (cFactoryObject*)object;
-		}
+		virtual cFactoryObject* Create() override final;
 	};
+
+	template <typename T>
+	cFactoryObject* ÒFactory<T>::Create()
+	{
+		if (_counter >= types::K_USIZE_MAX)
+		{
+			Print("Error: can't create object of type!");
+
+			return nullptr;
+		}
+
+		T* object = new T(_context);
+		const std::string id = object->GetType() + std::to_string(_counter++);
+		object._identifier = new cIdentifier(id);
+
+		return (cFactoryObject*)object;
+	}
 }
