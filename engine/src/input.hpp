@@ -21,7 +21,7 @@ namespace realware
         friend void WindowSizeCallback(GLFWwindow* window, int width, int height);
 
     public:
-        explicit cWindow(cContext* context, GLFWwindow* window, const std::string& title, types::usize width, types::usize height);
+        explicit cWindow(cContext* context, const std::string& title, types::usize width, types::usize height);
         virtual ~cWindow() override final = default;
 
         types::boolean GetRunState() const;
@@ -43,6 +43,7 @@ namespace realware
 	{
         REALWARE_CLASS(cInput)
 
+        friend class cWindow;
         friend void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
         friend void WindowFocusCallback(GLFWwindow* window, int focused);
         friend void WindowSizeCallback(GLFWwindow* window, int width, int height);
@@ -50,18 +51,17 @@ namespace realware
         friend void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 
 	public:
-		explicit cInput(cContext* context, const std::string& title, types::usize width, types::usize height);
-		virtual ~cInput() override final;
+		explicit cInput(cContext* context);
+		virtual ~cInput() override final = default;
 
         void SwapBuffers();
 		void PollEvents();
 
         glm::vec2 GetMonitorSize() const;
-        inline cWindow* GetWindow() const { return _window; }
         inline types::boolean GetKey(int key) const { return _keys[key]; }
         inline types::boolean GetMouseKey(int key) const { return _mouseKeys[key]; }
         inline types::boolean GetWindowFocus() const { return _isFocused; }
-        
+
     private:
         static constexpr types::usize K_MAX_KEY_COUNT = 256;
 
@@ -76,6 +76,5 @@ namespace realware
         types::s32 _mouseKeys[3] = {};
         types::boolean _isFocused = types::K_FALSE;
         glm::vec2 _cursorPosition = glm::vec2(0.0f);
-        cWindow* _window = nullptr;
 	};
 }
