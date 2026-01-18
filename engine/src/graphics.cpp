@@ -21,7 +21,7 @@
 #include "render_context.hpp"
 #include "log.hpp"
 
-namespace realware
+namespace arachne
 {
     sTransform::sTransform(const cGameObject* gameObject)
     {

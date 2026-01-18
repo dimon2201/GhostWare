@@ -8,7 +8,7 @@
 
 using namespace types;
 
-namespace realware
+namespace arachne
 {
     cGameObject::cGameObject(cContext* context) : cObject(context)
     {

@@ -15,7 +15,7 @@
 
 using namespace types;
 
-namespace realware
+namespace arachne
 {
     cCamera::cCamera(cContext* context) : cObject(context), _transform(_context->Create<sTransform>()) {}
 

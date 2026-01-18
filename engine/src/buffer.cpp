@@ -4,7 +4,7 @@
 
 #include "buffer.hpp"
 
-namespace realware
+namespace arachne
 {
     cDataBuffer::cDataBuffer(cContext* context) : cObject(context) {}
 

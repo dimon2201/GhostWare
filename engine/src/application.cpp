@@ -25,7 +25,7 @@
 
 using namespace types;
 
-namespace realware
+namespace arachne
 {
     cWindow::cWindow(cContext* context, const std::string& title, types::usize width, types::usize height, types::boolean fullscreen) : cObject(context), _title(title), _fullscreen(fullscreen)
     {

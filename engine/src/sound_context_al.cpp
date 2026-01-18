@@ -13,7 +13,7 @@
 
 using namespace types;
 
-namespace realware
+namespace arachne
 {
     cOpenALSoundAPI::cOpenALSoundAPI(cContext* context) : iSoundAPI(context)
     {

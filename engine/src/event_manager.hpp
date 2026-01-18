@@ -11,7 +11,7 @@
 #include "id_vec.hpp"
 #include "types.hpp"
 
-namespace realware
+namespace arachne
 {
     class cDataBuffer;
     class cContext;

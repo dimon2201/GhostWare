@@ -9,7 +9,7 @@
 
 using namespace types;
 
-namespace realware
+namespace arachne
 {
 	cMemoryAllocator::~cMemoryAllocator()
 	{

@@ -7,7 +7,7 @@
 
 using namespace types;
 
-namespace realware
+namespace arachne
 {
     mSound::mSound(cContext* context, iSoundContext* soundContext) : cObject(context), _soundContext(soundContext), _sounds(app) {}
 

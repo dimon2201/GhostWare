@@ -9,7 +9,7 @@
 
 using namespace types;
 
-namespace realware
+namespace arachne
 {
 	cSound::cSound(cContext* context) : cObject(context), _audioBackend(context->GetSubsystem<cAudio>()->GetAPI()) {}
 

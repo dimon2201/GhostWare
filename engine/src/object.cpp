@@ -4,7 +4,7 @@
 #include "event_manager.hpp"
 #include "context.hpp"
 
-namespace realware
+namespace arachne
 {
 	cIdentifier::cIdentifier(const std::string& id) : _id(id) {}
 

@@ -9,7 +9,7 @@
 
 using namespace types;
 
-namespace realware
+namespace arachne
 {
     cTask::cTask(cBuffer* data, TaskFunction&& function) : _data(data), _function(std::make_shared<TaskFunction>(std::move(function)))
     {

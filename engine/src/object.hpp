@@ -9,7 +9,7 @@
 #include "memory_pool.hpp"
 #include "types.hpp"
 
-namespace realware
+namespace arachne
 {
 	class cContext;
 	class cDataBuffer;

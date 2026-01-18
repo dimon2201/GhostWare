@@ -8,7 +8,7 @@
 #include "object.hpp"
 #include "types.hpp"
 
-namespace realware
+namespace arachne
 {
 	class cTime : public cObject
 	{

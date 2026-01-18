@@ -2,7 +2,7 @@
 
 #include "time.hpp"
 
-namespace realware
+namespace arachne
 {
 	cTime::cTime(cContext* context) : cObject(context) {}
 

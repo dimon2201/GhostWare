@@ -10,7 +10,7 @@
 
 struct GLFWwindow;
 
-namespace realware
+namespace arachne
 {
 	class cContext;
 

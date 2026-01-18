@@ -18,7 +18,7 @@
 
 using namespace types;
 
-namespace realware
+namespace arachne
 {
     void APIENTRY GLDebugCallback(
         GLenum source,

@@ -6,7 +6,7 @@
 #include "id_vec.hpp"
 #include "types.hpp"
 
-namespace realware
+namespace arachne
 {
 	class cContext;
 	class iSoundAPI;

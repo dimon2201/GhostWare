@@ -25,7 +25,7 @@ namespace physx
     class PxPhysics;
 }
 
-namespace realware
+namespace arachne
 {
     class cApplication;
     class cGameObject;

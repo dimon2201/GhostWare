@@ -2,7 +2,7 @@
 
 #pragma once
 
-namespace realware
+namespace arachne
 {
     enum class eCategory
     {

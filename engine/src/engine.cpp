@@ -19,7 +19,7 @@
 
 using namespace types;
 
-namespace realware
+namespace arachne
 {
 	cEngine::cEngine(cContext* context, const sEngineCapabilities* capabilities, iApplication* app) : cObject(context), _capabilities(capabilities), _app(app) {}
 

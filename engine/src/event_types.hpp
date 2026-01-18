@@ -1,6 +1,6 @@
 // event_types.hpp
 
-namespace realware
+namespace arachne
 {
     enum class eEventType
     {

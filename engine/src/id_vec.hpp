@@ -7,7 +7,7 @@
 #include "log.hpp"
 #include "types.hpp"
 
-namespace realware
+namespace arachne
 {
 	class cContext;
 

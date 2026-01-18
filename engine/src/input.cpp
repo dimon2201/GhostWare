@@ -8,7 +8,7 @@
 
 using namespace types;
 
-namespace realware
+namespace arachne
 {
     void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
     {

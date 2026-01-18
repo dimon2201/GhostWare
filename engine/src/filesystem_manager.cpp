@@ -13,7 +13,7 @@
 
 using namespace types;
 
-namespace realware
+namespace arachne
 {
     cDataFile::cDataFile(cContext* context) : cObject(context) {}
 

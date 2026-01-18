@@ -4,7 +4,7 @@
 
 #include "types.hpp"
 
-namespace realware
+namespace arachne
 {
     namespace core
     {

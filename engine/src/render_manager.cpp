@@ -20,7 +20,7 @@
 
 using namespace types;
 
-namespace realware
+namespace arachne
 {
     sTransform::sTransform(const cGameObject* gameObject)
     {
