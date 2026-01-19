@@ -22,16 +22,16 @@ namespace harpy
         delete _identifier;
     }
 
-    void iObject::Subscribe(const std::string& id, eEventType type)
+    void iObject::Subscribe(eEventType type, EventFunction&& function)
     {
         cEventDispatcher* dispatcher = _context->GetSubsystem<cEventDispatcher>();
-        dispatcher->Subscribe(id, type);
+        dispatcher->Subscribe(this, type, std::move(function));
     }
 
-    void iObject::Unsubscribe(eEventType type, cGameObject* receiver)
+    void iObject::Unsubscribe(eEventType type)
     {
         cEventDispatcher* dispatcher = _context->GetSubsystem<cEventDispatcher>();
-        dispatcher->Unsubscribe(type, receiver);
+        dispatcher->Unsubscribe(this, type);
     }
 
     void iObject::Send(eEventType type)

@@ -11,41 +11,38 @@ using namespace types;
 
 namespace harpy
 {
-    cEventHandler::cEventHandler(eEventType type, cGameObject* receiver, EventFunction&& function) : _receiver(receiver), _type(type), _function(std::make_shared<EventFunction>(std::move(function))) {}
+    cEventHandler::cEventHandler(iObject* receiver, eEventType type, EventFunction&& function) : _receiver(receiver), _type(type), _function(std::make_shared<EventFunction>(std::move(function))) {}
 
     void cEventHandler::Invoke(cDataBuffer* data)
     {
         _function->operator()(data);
-    };
+    }
 
     cEventDispatcher::cEventDispatcher(cContext* context) : iObject(context) {}
 
-    void cEventDispatcher::Subscribe(const std::string& id, eEventType type)
+    void cEventDispatcher::Subscribe(iObject* receiver, eEventType type, EventFunction&& function)
     {
         const auto listener = _listeners.find(type);
         if (listener == _listeners.end())
-            _listeners.insert({ type, std::make_shared<std::vector<cEventHandler>>() });
-        _listeners[type]->emplace_back(id, type);
+            _listeners.insert({ type, std::make_shared<cIdVector<cEventHandler>>() });
+        _listeners[type]->Add(receiver->GetID(), receiver, type, std::move(function));
     }
 
-    void cEventDispatcher::Unsubscribe(eEventType type, cGameObject* receiver)
+    void cEventDispatcher::Unsubscribe(iObject* receiver, eEventType type)
     {
         if (_listeners.find(type) == _listeners.end())
             return;
 
         auto& events = _listeners[type];
-        auto it = events->begin();
-        while (it != events->end())
+        const cEventHandler* elements = events->GetElements();
+        for (usize i = 0; i < events->GetElementCount(); i++)
         {
-            const cGameObject* listenerReceiver = it->GetReceiver();
+            const iObject* listenerReceiver = elements[i].GetReceiver();
             if (listenerReceiver == receiver)
             {
-                it = events->erase(it);
+                events->Delete(listenerReceiver->GetID());
+
                 return;
-            }
-            else
-            {
-                ++it;
             }
         }
     }
@@ -63,7 +60,8 @@ namespace harpy
             return;
 
         auto& events = _listeners[type];
-        for (usize i = 0; i < events->size(); i++)
-            events->data()[i].Invoke(data);
+        cEventHandler* elements = events->GetElements();
+        for (usize i = 0; i < events->GetElementCount(); i++)
+            elements[i].Invoke(data);
     }
 }

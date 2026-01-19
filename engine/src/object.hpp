@@ -55,8 +55,8 @@ namespace harpy
 
 		virtual ClassType GetType() const = 0;
 
-		void Subscribe(const std::string& id, eEventType type);
-		void Unsubscribe(eEventType type, cGameObject* receiver);
+		void Subscribe(eEventType type, EventFunction&& function);
+		void Unsubscribe(eEventType type);
 		void Send(eEventType type);
 		void Send(eEventType type, cDataBuffer* data);
 
