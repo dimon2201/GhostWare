@@ -1,6 +1,6 @@
 # Arachne Engine
 
-![Arachne Engine Logo](logo.png)
+![Arachne Engine Logo](ArachneLogo.png)
 
 Lightweight C++11 game engine.
 
