@@ -37,7 +37,7 @@ namespace harpy
 	{
 		if (_counter >= types::K_USIZE_MAX)
 		{
-			Print("Error: can't create object of type '" + T::GetType() + "'!");
+			Print("Error: can't create object of type '" + T::GetTypeStatic() + "'!");
 
 			return nullptr;
 		}

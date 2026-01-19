@@ -18,9 +18,8 @@ namespace harpy
 
 	#define HARPY_OBJECT(typeName) \
 		public: \
+			static ClassType GetTypeStatic() { return #typeName; } \
 			virtual ClassType GetType() const override { return GetTypeStatic(); } \
-		private: \
-			static ClassType GetTypeStatic() { return #typeName; }
 
 	class cIdentifier
 	{

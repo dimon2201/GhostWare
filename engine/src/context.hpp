@@ -47,7 +47,7 @@ namespace harpy
 	template <typename T, typename... Args>
 	T* cContext::Create(Args&&... args)
 	{
-		const ClassType type = T::GetType();
+		const ClassType type = T::GetTypeStatic();
 		const auto it = _factories.find(type);
 		if (it != _factories.end())
 			return ((cFactory<T>*)it->second.get())->Create(std::forward<Args>(args)...);
@@ -58,7 +58,7 @@ namespace harpy
 	template <typename T>
 	void cContext::Destroy(T* object)
 	{
-		const ClassType type = T::GetType();
+		const ClassType type = T::GetTypeStatic();
 		const auto it = _factories.find(type);
 		if (it != _factories.end())
 			((cFactory<T>*)it->second.get())->Destroy(object);
@@ -67,7 +67,7 @@ namespace harpy
 	template <typename T>
 	void cContext::RegisterFactory()
 	{
-		const ClassType type = T::GetType();
+		const ClassType type = T::GetTypeStatic();
 		const auto it = _factories.find(type);
 		if (it == _factories.end())
 			_factories.insert({type, std::make_shared<iObject>(this)});
@@ -76,7 +76,7 @@ namespace harpy
 	template <typename T>
 	T* cContext::GetFactory() const
 	{
-		const ClassType type = T::GetType();
+		const ClassType type = T::GetTypeStatic();
 		const auto it = _factories.find(type);
 		if (it != _factories.end())
 			return (T*)it->second.get();
@@ -87,7 +87,7 @@ namespace harpy
 	template <typename T>
 	T* cContext::GetSubsystem() const
 	{
-		const ClassType type = T::GetType();
+		const ClassType type = T::GetTypeStatic();
 		const auto it = _subsystems.find(type);
 		if (it != _subsystems.end())
 			return (T*)it->second.get();
