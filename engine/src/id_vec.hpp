@@ -21,7 +21,7 @@ namespace harpy
 		~cIdVector();
 
 		template<typename... Args>
-		T* Add(Args&&... args);
+		T* Add(const std::string& id, Args&&... args);
 		T* Find(const std::string& id);
 		void Delete(const std::string& id);
 
@@ -67,7 +67,7 @@ namespace harpy
 
 	template <typename T>
 	template <typename... Args>
-	T* cIdVector<T>::Add(Args&&... args)
+	T* cIdVector<T>::Add(const std::string& id, Args&&... args)
 	{
 		if (_indexCount >= _maxElementCount)
 			return nullptr;
@@ -76,6 +76,8 @@ namespace harpy
 		if (index == K_INVALID_INDEX)
 		{
 			new (&_elements[_indexCount]) T(std::forward<Args>(args)...);
+			((iObject*)&_elements[_indexCount])->_identifier = cIdentifier::GenerateIdentifier(T::GetTypeStatic());
+
 			_indices[_indexCount] = _indexCount;
 
 			return (T*)&_elements[_indexCount++];

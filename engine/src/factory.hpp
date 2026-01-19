@@ -49,8 +49,7 @@ namespace harpy
 		T* object = (T*)memoryAllocator->Allocate(objectByteSize, caps->memoryAlignment);
 		new (object) T(std::forward<Args>(args)...);
 		
-		const std::string id = object->GetType() + std::to_string(_counter++);
-		object->_identifier = new cIdentifier(id);
+		object->_identifier = cIdentifier::GenerateIdentifier(T::GetTypeStatic());
 
 		return object;
 	}

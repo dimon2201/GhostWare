@@ -30,6 +30,8 @@ namespace harpy
 		cIdentifier(const std::string& id);
 		~cIdentifier() = default;
 
+		static cIdentifier* GenerateIdentifier(const std::string& type);
+
 		inline const ID& GetID() const { return _id; }
 
 	private:
@@ -38,6 +40,10 @@ namespace harpy
 
 	class iObject
 	{
+		template <typename T>
+		friend class cIdVector;
+		template <typename T>
+		friend class cFactory;
 		friend class cMemoryAllocator;
 
 	public:

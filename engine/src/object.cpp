@@ -4,9 +4,18 @@
 #include "event_manager.hpp"
 #include "context.hpp"
 
+using namespace types;
+
 namespace harpy
 {
 	cIdentifier::cIdentifier(const std::string& id) : _id(id) {}
+
+    cIdentifier* cIdentifier::GenerateIdentifier(const std::string& type)
+    {
+        static usize counter = 0;
+
+        return new cIdentifier(type + std::to_string(counter++));
+    }
 
     iObject::~iObject()
     {
