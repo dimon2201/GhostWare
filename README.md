@@ -2,7 +2,7 @@
 
 ![Ladon Engine Logo](LadonLogo.png)
 
-Lightweight C++11 game engine.
+High-performance C++11 game engine.
 
 Inspired by Urho3D, Wicked Engine, HPL1 Engine, UE4.
 
