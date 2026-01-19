@@ -271,12 +271,12 @@ namespace harpy
 
     f32 cFont::GetTextWidth(cFontFace* font, const std::string& text) const
     {
-        cInput* input = _context->GetSubsystem<cInput>();
+        iApplication* app = _context->GetSubsystem<cEngine>()->GetApplication();
 
         f32 textWidth = 0.0f;
         f32 maxTextWidth = 0.0f;
         const usize textByteSize = strlen(text.c_str());
-        const glm::vec2 windowSize = input->GetWindow()->GetSize();
+        const glm::vec2 windowSize = app->GetWindow()->GetSize();
 
         for (usize i = 0; i < textByteSize; i++)
         {
@@ -313,12 +313,12 @@ namespace harpy
 
     f32 cFont::GetTextHeight(cFontFace* font, const std::string& text) const
     {
-        cInput* input = _context->GetSubsystem<cInput>();
+        iApplication* app = _context->GetSubsystem<cEngine>()->GetApplication();
 
         f32 textHeight = 0.0f;
         f32 maxHeight = 0.0f;
         const usize textByteSize = strlen(text.c_str());
-        const glm::vec2 windowSize = input->GetWindow()->GetSize();
+        const glm::vec2 windowSize = app->GetWindow()->GetSize();
 
         for (usize i = 0; i < textByteSize; i++)
         {
