@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include "../../thirdparty/glm/glm/glm.hpp"
 #include "object.hpp"
+#include "render_context.hpp"
 #include "category.hpp"
 #include "id_vec.hpp"
 #include "types.hpp"
@@ -87,16 +88,16 @@ namespace harpy
         HARPY_OBJECT(cMaterial)
 
     public:
-        explicit cMaterial(cContext* context, cTextureAtlasTexture* diffuseTexture, const glm::vec4& diffuseColor, const glm::vec4& highlightColor, sShader* customShader) : iObject(context), _diffuseTexture(diffuseTexture), _diffuseColor(diffuseColor), _highlightColor(highlightColor), _customShader(customShader) {}
+        explicit cMaterial(cContext* context, cTextureAtlasTexture* diffuseTexture, const glm::vec4& diffuseColor, const glm::vec4& highlightColor, cShader* customShader) : iObject(context), _diffuseTexture(diffuseTexture), _diffuseColor(diffuseColor), _highlightColor(highlightColor), _customShader(customShader) {}
         ~cMaterial() = default;
 
-        inline sShader* GetCustomShader() const { return _customShader; }
+        inline cShader* GetCustomShader() const { return _customShader; }
         inline cTextureAtlasTexture* GetDiffuseTexture() const { return _diffuseTexture; }
         inline const glm::vec4& GetDiffuseColor() const { return _diffuseColor; }
         inline const glm::vec4& GetHighlightColor() const { return _highlightColor; }
 
     private:
-        sShader* _customShader = nullptr;
+        cShader* _customShader = nullptr;
         cTextureAtlasTexture* _diffuseTexture = nullptr;
         glm::vec4 _diffuseColor = glm::vec4(1.0f);
         glm::vec4 _highlightColor = glm::vec4(1.0f);
@@ -144,12 +145,38 @@ namespace harpy
         glm::vec4 _attenuation = glm::vec4(0.0f);
     };
 
+    class cRenderPass : public iObject
+    {
+        HARPY_OBJECT(cRenderPass)
+
+        friend class cOpenGLGraphicsAPI;
+
+    public:
+        explicit cRenderPass(cContext* context, sRenderPassDescriptor* desc, cRenderPassGPU* renderPass);
+        virtual ~cRenderPass() override final = default;
+
+        void ResizeViewport(const glm::vec2& size);
+        void ResizeColorAttachments(const glm::vec2& size);
+        void ResizeDepthAttachment(const glm::vec2& size);
+
+        inline const std::vector<cTextureAtlasTexture*>& GetInputTextureAtlasTextures() const { return _desc->inputTextureAtlasTextures; }
+        inline cVertexArray* GetVertexArray() const { return _renderPass->GetVertexArray(); }
+        inline cShader* GetShader() const { return _renderPass->GetShader(); }
+        inline cRenderTarget* GetRenderTarget() const { return _renderPass->GetRenderTarget(); }
+        inline cRenderPassGPU* GetRenderPassGPU() const { return _renderPass; }
+        inline void SetInputTexture(types::usize textureIndex, cTexture* texture) { _desc->inputTextures[textureIndex] = texture; }
+
+    private:
+        sRenderPassDescriptor* _desc = nullptr;
+        cRenderPassGPU* _renderPass = nullptr;
+    };
+
 	class cGraphics : public iObject
 	{
         HARPY_OBJECT(cGraphics)
 
 	public:
-		enum class API
+		enum class eAPI
 		{
 			NONE = 0,
 			OGL,
@@ -157,56 +184,63 @@ namespace harpy
 		};
 
 	public:
-		explicit cGraphics(cContext* context);
-		virtual ~cGraphics();
+		explicit cGraphics(cContext* context, eAPI api);
+		virtual ~cGraphics() override final;
 
         cMaterial* CreateMaterial(const std::string& id, cTextureAtlasTexture* diffuseTexture, const glm::vec4& diffuseColor, const glm::vec4& highlightColor, eCategory customShaderRenderPath = eCategory::RENDER_PATH_OPAQUE, const std::string& customVertexFuncPath = "", const std::string& customFragmentFuncPath = "");
-        cMaterial* FindMaterial(const std::string& id);
-        void DestroyMaterial(const std::string& id);
-        sVertexArray* CreateDefaultVertexArray();
+        cVertexArray* CreateDefaultVertexArray();
         sVertexBufferGeometry* CreateGeometry(eCategory format, types::usize verticesByteSize, const void* vertices, types::usize indicesByteSize, const void* indices);
-        void DestroyGeometry(sVertexBufferGeometry* geometry);
-        void ClearGeometryBuffer();
-        void ClearRenderPass(const sRenderPass* renderPass, types::boolean clearColor, types::usize bufferIndex, const glm::vec4& color, types::boolean clearDepth, types::f32 depth);
-        void ClearRenderPasses(const glm::vec4& clearColor, types::f32 clearDepth);
-        void UpdateLights();
-        void WriteObjectsToOpaqueBuffers(cIdVector<cGameObject>& objects, sRenderPass* renderPass);
-        void WriteObjectsToTransparentBuffers(cIdVector<cGameObject>& objects, sRenderPass* renderPass);
-        void DrawGeometryOpaque(const sVertexBufferGeometry* geometry, const cGameObject* cameraObject, sRenderPass* renderPass);
-        void DrawGeometryOpaque(const sVertexBufferGeometry* geometry, const cGameObject* cameraObject, sShader* singleShader = nullptr);
-        void DrawGeometryTransparent(const sVertexBufferGeometry* geometry, const std::vector<cGameObject>& objects, const cGameObject* cameraObject, sRenderPass* renderPass);
-        void DrawGeometryTransparent(const sVertexBufferGeometry* geometry, const cGameObject* cameraObject, sShader* singleShader = nullptr);
-        void DrawTexts(const std::vector<cGameObject>& objects);
-        void CompositeTransparent();
-        void CompositeFinal();
+        cRenderPass* CreateRenderPass(const sRenderPassDescriptor* desc);
         sPrimitive* CreatePrimitive(eCategory primitive);
         sModel* CreateModel(const std::string& filename);
+
+        cMaterial* FindMaterial(const std::string& id);
+        
+        void DestroyMaterial(const std::string& id);
+        void DestroyVertexArray(cVertexArray* vertexArray);
+        void DestroyGeometry(sVertexBufferGeometry* geometry);
+        void DestroyRenderPass(cRenderPass* renderPass);
         void DestroyPrimitive(sPrimitive* primitiveObject);
-        void LoadShaderFiles(const std::string& vertexFuncPath, const std::string& fragmentFuncPath, std::string& vertexFunc, std::string& fragmentFunc);
+        void DestroyModel(sModel* model);
+        
+        void ClearGeometryBuffer();
+        void ClearRenderPass(const cRenderPass* renderPass, types::boolean clearColor, types::usize bufferIndex, const glm::vec4& color, types::boolean clearDepth, types::f32 depth);
+        void ClearRenderPasses(const glm::vec4& clearColor, types::f32 clearDepth);
         void ResizeRenderTargets(const glm::vec2& size);
+        void LoadShaderFiles(const std::string& vertexFuncPath, const std::string& fragmentFuncPath, std::string& vertexFunc, std::string& fragmentFunc);
+        void UpdateLights();
+        
+        void WriteObjectsToOpaqueBuffers(cIdVector<cGameObject>& objects, cRenderPass* renderPass);
+        void WriteObjectsToTransparentBuffers(cIdVector<cGameObject>& objects, cRenderPass* renderPass);
+        
+        void DrawGeometryOpaque(const sVertexBufferGeometry* geometry, const cGameObject* cameraObject, cRenderPass* renderPass);
+        void DrawGeometryOpaque(const sVertexBufferGeometry* geometry, const cGameObject* cameraObject, cShader* singleShader = nullptr);
+        void DrawGeometryTransparent(const sVertexBufferGeometry* geometry, const std::vector<cGameObject>& objects, const cGameObject* cameraObject, cRenderPass* renderPass);
+        void DrawGeometryTransparent(const sVertexBufferGeometry* geometry, const cGameObject* cameraObject, cShader* singleShader = nullptr);
+        void DrawTexts(const std::vector<cGameObject>& objects);
+        
+        void CompositeTransparent();
+        void CompositeFinal();
 
         inline iGraphicsAPI* GetAPI() const { return _gfx; }
-        inline sBuffer* GetVertexBuffer() const { return _vertexBuffer; }
-        inline sBuffer* GetIndexBuffer() const { return _indexBuffer; }
-        inline sBuffer* GetOpaqueInstanceBuffer() const { return _opaqueInstanceBuffer; }
-        inline sBuffer* GetTextInstanceBuffer() const { return _textInstanceBuffer; }
-        inline sBuffer* GetOpaqueMaterialBuffer() const { return _opaqueMaterialBuffer; }
-        inline sBuffer* GetTransparentInstanceBuffer() const { return _transparentInstanceBuffer; }
-        inline sBuffer* GetTransparentMaterialBuffer() const { return _transparentMaterialBuffer; }
-        inline sBuffer* GetTextMaterialBuffer() const { return _textMaterialBuffer; }
-        inline sBuffer* GetLightBuffer() const { return _lightBuffer; }
-        inline sBuffer* GetOpaqueTextureAtlasTexturesBuffer() const { return _opaqueTextureAtlasTexturesBuffer; }
-        inline sBuffer* GetTransparentTextureAtlasTexturesBuffer() const { return _transparentTextureAtlasTexturesBuffer; }
-        inline sRenderPass* GetOpaqueRenderPass() const { return _opaque; }
-        inline sRenderPass* GetTransparentRenderPass() const { return _transparent; }
-        inline sRenderPass* GetTextRenderPass() const { return _text; }
-        inline sRenderPass* GetCompositeTransparentRenderPass() const { return _compositeTransparent; }
-        inline sRenderPass* GetCompositeFinalRenderPass() const { return _compositeFinal; }
-        inline sRenderTarget* GetOpaqueRenderTarget() const { return _opaqueRenderTarget; }
-        inline sRenderTarget* GetTransparentRenderTarget() const { return _transparentRenderTarget; }
-
-        void SetAPI(API api);
-        void SwapBuffers();
+        inline cBuffer* GetVertexBuffer() const { return _vertexBuffer; }
+        inline cBuffer* GetIndexBuffer() const { return _indexBuffer; }
+        inline cBuffer* GetOpaqueInstanceBuffer() const { return _opaqueInstanceBuffer; }
+        inline cBuffer* GetTextInstanceBuffer() const { return _textInstanceBuffer; }
+        inline cBuffer* GetOpaqueMaterialBuffer() const { return _opaqueMaterialBuffer; }
+        inline cBuffer* GetTransparentInstanceBuffer() const { return _transparentInstanceBuffer; }
+        inline cBuffer* GetTransparentMaterialBuffer() const { return _transparentMaterialBuffer; }
+        inline cBuffer* GetTextMaterialBuffer() const { return _textMaterialBuffer; }
+        inline cBuffer* GetLightBuffer() const { return _lightBuffer; }
+        inline cBuffer* GetOpaqueTextureAtlasTexturesBuffer() const { return _opaqueTextureAtlasTexturesBuffer; }
+        inline cBuffer* GetTransparentTextureAtlasTexturesBuffer() const { return _transparentTextureAtlasTexturesBuffer; }
+        inline cRenderPass* GetOpaqueRenderPass() const { return _opaque; }
+        inline cRenderPass* GetTransparentRenderPass() const { return _transparent; }
+        inline cRenderPass* GetTextRenderPass() const { return _text; }
+        inline cRenderPass* GetCompositeTransparentRenderPass() const { return _compositeTransparent; }
+        inline cRenderPass* GetCompositeFinalRenderPass() const { return _compositeFinal; }
+        inline cRenderTarget* GetOpaqueRenderTarget() const { return _opaqueRenderTarget; }
+        inline cRenderTarget* GetTransparentRenderTarget() const { return _transparentRenderTarget; }
 
 	private:
 		iGraphicsAPI* _gfx = nullptr;
@@ -216,18 +250,18 @@ namespace harpy
         types::usize _maxMaterialBufferByteSize = 0;
         types::usize _maxLightBufferByteSize = 0;
         types::usize _maxTextureAtlasTexturesBufferByteSize = 0;
-        sBuffer* _vertexBuffer = nullptr;
-        sBuffer* _indexBuffer = nullptr;
-        sBuffer* _opaqueInstanceBuffer = nullptr;
-        sBuffer* _transparentInstanceBuffer = nullptr;
-        sBuffer* _textInstanceBuffer = nullptr;
-        sBuffer* _opaqueMaterialBuffer = nullptr;
-        sBuffer* _transparentMaterialBuffer = nullptr;
-        sBuffer* _textMaterialBuffer = nullptr;
-        sBuffer* _lightBuffer = nullptr;
-        sBuffer* _opaqueTextureAtlasTexturesBuffer = nullptr;
-        sBuffer* _transparentTextureAtlasTexturesBuffer = nullptr;
-        sBuffer* _textTextureAtlasTexturesBuffer = nullptr;
+        cBuffer* _vertexBuffer = nullptr;
+        cBuffer* _indexBuffer = nullptr;
+        cBuffer* _opaqueInstanceBuffer = nullptr;
+        cBuffer* _transparentInstanceBuffer = nullptr;
+        cBuffer* _textInstanceBuffer = nullptr;
+        cBuffer* _opaqueMaterialBuffer = nullptr;
+        cBuffer* _transparentMaterialBuffer = nullptr;
+        cBuffer* _textMaterialBuffer = nullptr;
+        cBuffer* _lightBuffer = nullptr;
+        cBuffer* _opaqueTextureAtlasTexturesBuffer = nullptr;
+        cBuffer* _transparentTextureAtlasTexturesBuffer = nullptr;
+        cBuffer* _textTextureAtlasTexturesBuffer = nullptr;
         types::usize _opaqueInstanceCount = 0;
         types::usize _transparentInstanceCount = 0;
         void* _vertices = nullptr;
@@ -255,14 +289,14 @@ namespace harpy
         void* _textTextureAtlasTextures = nullptr;
         types::usize _textTextureAtlasTexturesByteSize = 0;
         std::unordered_map<cMaterial*, types::s32>* _materialsMap = {};
-        sRenderPass* _opaque = nullptr;
-        sRenderPass* _transparent = nullptr;
-        sRenderPass* _text = nullptr;
-        sRenderPass* _compositeTransparent = nullptr;
-        sRenderPass* _compositeFinal = nullptr;
-        sRenderTarget* _opaqueRenderTarget = nullptr;
-        sRenderTarget* _transparentRenderTarget = nullptr;
+        cRenderPass* _opaque = nullptr;
+        cRenderPass* _transparent = nullptr;
+        cRenderPass* _text = nullptr;
+        cRenderPass* _compositeTransparent = nullptr;
+        cRenderPass* _compositeFinal = nullptr;
+        cRenderTarget* _opaqueRenderTarget = nullptr;
+        cRenderTarget* _transparentRenderTarget = nullptr;
         types::usize _materialCountCPU = 0;
-        cIdVector<cMaterial> _materialsCPU;
+        cIdVector<cMaterial>* _materialsCPU;
 	};
 }

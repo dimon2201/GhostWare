@@ -38,7 +38,7 @@ namespace harpy
 
 		// Register subsystems
 		_context->RegisterSubsystem(this);
-		_context->RegisterSubsystem(new cGraphics(_context));
+		_context->RegisterSubsystem(new cGraphics(_context, cGraphics::eAPI::OGL));
 		_context->RegisterSubsystem(new cInput(_context));
 		_context->RegisterSubsystem(new cCamera(_context));
 		_context->RegisterSubsystem(new cTextureAtlas(_context));
@@ -50,10 +50,6 @@ namespace harpy
 		_context->RegisterSubsystem(new cTime(_context));
 		_context->RegisterSubsystem(new cEventDispatcher(_context));
 		_context->RegisterSubsystem(new cAudio(_context));
-
-		// Create graphics backend
-		cGraphics* graphics = _context->GetSubsystem<cGraphics>();
-		graphics->SetAPI(cGraphics::API::OGL);
 
 		// Create texture manager
 		cTextureAtlas* texture = _context->GetSubsystem<cTextureAtlas>();

@@ -14,6 +14,7 @@
 #include "memory_pool.hpp"
 #include "context.hpp"
 #include "engine.hpp"
+#include "graphics.hpp"
 #include "log.hpp"
 
 using namespace types;
@@ -69,12 +70,12 @@ namespace harpy
     {
     }
 
-    cBuffer* cOpenGLGraphicsAPI::CreateBuffer(usize byteSize, cBuffer::eType type, const void* data)
+    cBuffer* cOpenGLGraphicsAPI::CreateBuffer(usize byteSize, cBuffer::eType type, s32 slot, const void* data)
     {
         cBuffer* buffer = _context->Create<cBuffer>();
         buffer->_byteSize = byteSize;
         buffer->_type = type;
-        buffer->_slot = 0;
+        buffer->_slot = slot;
 
         glGenBuffers(1, (GLuint*)&buffer->_instance);
 
@@ -798,55 +799,54 @@ namespace harpy
             _context->Destroy<cRenderTarget>(renderTarget);
     }
 
-    cRenderPass* cOpenGLGraphicsAPI::CreateRenderPass(const cRenderPass::sDescriptor& descriptor)
+    cRenderPassGPU* cOpenGLGraphicsAPI::CreateRenderPass(const sRenderPassDescriptor* desc)
     {
-        cRenderPass* renderPass = _context->Create<cRenderPass>();
-        memset(renderPass, 0, sizeof(cRenderPass));
-        renderPass->_desc = descriptor;
-
         std::vector<cShader::sDefinePair> definePairs = {};
+        cVertexArray* vertexArray = nullptr;
+        cShader* shader = nullptr;
+        cRenderTarget* renderTarget = nullptr;
 
-        if (renderPass->_desc._inputTextureAtlasTextures.size() != renderPass->_desc._inputTextureAtlasTextureNames.size())
+        if (desc->inputTextureAtlasTextures.size() != desc->inputTextureAtlasTextureNames.size())
         {
             Print("Error: mismatch of render pass input texture atlas texture array and input texture atlas texture name array!");
             return nullptr;
         }
-        for (usize i = 0; i < renderPass->_desc._inputTextureAtlasTextures.size(); i++)
+        for (usize i = 0; i < desc->inputTextureAtlasTextures.size(); i++)
         {
             const usize textureAtlasTextureIndex = i;
-            const std::string& textureAtlasTextureName = renderPass->_desc._inputTextureAtlasTextureNames[i];
+            const std::string& textureAtlasTextureName = desc->inputTextureAtlasTextureNames[i];
             definePairs.push_back({ textureAtlasTextureName, textureAtlasTextureIndex });
         }
 
-        if (renderPass->_desc._shaderBase == nullptr)
+        if (desc->shaderBase == nullptr)
         {
-            renderPass->_desc._shader = CreateShader(
-                renderPass->_desc._shaderRenderPath,
-                renderPass->_desc._shaderVertexPath,
-                renderPass->_desc._shaderFragmentPath,
+            shader = CreateShader(
+                desc->shaderRenderPath,
+                desc->shaderVertexPath,
+                desc->shaderFragmentPath,
                 definePairs
             );
         }
         else
         {
-            renderPass->_desc._shader = CreateShader(
-                renderPass->_desc._shaderBase,
-                renderPass->_desc._shaderVertexFunc,
-                renderPass->_desc._shaderFragmentFunc,
+            shader = CreateShader(
+                desc->shaderBase,
+                desc->shaderVertexFunc,
+                desc->shaderFragmentFunc,
                 definePairs
             );
         }
 
-        renderPass->_desc._vertexArray = CreateVertexArray();
-        BindVertexArray(renderPass->_desc._vertexArray);
-        if (renderPass->_desc._inputVertexFormat == eCategory::VERTEX_BUFFER_FORMAT_NONE)
+        vertexArray = CreateVertexArray();
+        BindVertexArray(vertexArray);
+        if (desc->inputVertexFormat == eCategory::VERTEX_BUFFER_FORMAT_NONE)
         {
-            for (auto buffer : renderPass->_desc._inputBuffers)
+            for (auto buffer : desc->inputBuffers)
                 BindBuffer(buffer);
         }
-        else if (renderPass->_desc._inputVertexFormat == eCategory::VERTEX_BUFFER_FORMAT_POS_TEX_NRM_VEC3_VEC2_VEC3)
+        else if (desc->inputVertexFormat == eCategory::VERTEX_BUFFER_FORMAT_POS_TEX_NRM_VEC3_VEC2_VEC3)
         {
-            for (auto buffer : renderPass->_desc._inputBuffers)
+            for (auto buffer : desc->inputBuffers)
                 BindBuffer(buffer);
 
             BindDefaultInputLayout();
@@ -854,50 +854,51 @@ namespace harpy
 
         UnbindVertexArray();
 
-        return renderPass;
+        return _context->Create<cRenderPassGPU>(_context, vertexArray, shader, renderTarget);
     }
 
     void cOpenGLGraphicsAPI::BindRenderPass(const cRenderPass* renderPass, cShader* customShader)
     {
         cShader* shader = nullptr;
         if (customShader == nullptr)
-            shader = renderPass->_desc._shader;
+            shader = renderPass->GetRenderPassGPU()->GetShader();
         else
             shader = customShader;
 
         BindShader(shader);
-        BindVertexArray(renderPass->_desc._vertexArray);
-        if (renderPass->_desc._renderTarget != nullptr)
-            BindRenderTarget(renderPass->_desc._renderTarget);
+        BindVertexArray(renderPass->GetRenderPassGPU()->GetVertexArray());
+        if (renderPass->GetRenderPassGPU()->GetRenderTarget() != nullptr)
+            BindRenderTarget(renderPass->GetRenderPassGPU()->GetRenderTarget());
         else
             UnbindRenderTarget();
-        Viewport(renderPass->_desc._viewport);
-        for (auto buffer : renderPass->_desc._inputBuffers)
+        Viewport(renderPass->GetDesc()->viewport);
+        for (auto buffer : renderPass->GetDesc()->inputBuffers)
             BindBufferNotVAO(buffer);
-        BindDepthMode(renderPass->_desc._depthMode);
-        BindBlendMode(renderPass->_desc._blendMode);
-        for (usize i = 0; i < renderPass->_desc._inputTextures.size(); i++)
-            BindTexture(shader, renderPass->_desc._inputTextureNames[i].c_str(), renderPass->_desc._inputTextures[i], i);
+        BindDepthMode(renderPass->GetDesc()->depthMode);
+        BindBlendMode(renderPass->GetDesc()->blendMode);
+        for (usize i = 0; i < renderPass->GetDesc()->inputTextures.size(); i++)
+            BindTexture(shader, renderPass->GetDesc()->inputTextureNames[i].c_str(), renderPass->GetDesc()->inputTextures[i], i);
     }
 
     void cOpenGLGraphicsAPI::UnbindRenderPass(const cRenderPass* renderPass)
     {
         UnbindVertexArray();
-        if (renderPass->_desc._renderTarget != nullptr)
+        if (renderPass->GetRenderPassGPU()->GetRenderTarget() != nullptr)
             UnbindRenderTarget();
-        for (auto buffer : renderPass->_desc._inputBuffers)
+        for (auto buffer : renderPass->GetDesc()->inputBuffers)
             UnbindBuffer(buffer);
-        for (auto texture : renderPass->_desc._inputTextures)
+        for (auto texture : renderPass->GetDesc()->inputTextures)
             UnbindTexture(texture);
     }
 
-    void cOpenGLGraphicsAPI::DestroyRenderPass(cRenderPass* renderPass)
+    void cOpenGLGraphicsAPI::DestroyRenderPass(cRenderPassGPU* renderPass)
     {
         glBindVertexArray(0);
-        DestroyVertexArray(renderPass->_desc._vertexArray);
-
-        if (renderPass != nullptr)
-            _context->Destroy<cRenderPass>(renderPass);
+        DestroyVertexArray(renderPass->GetVertexArray());
+        
+        DestroyShader(renderPass->GetShader());
+        
+        _context->Destroy<cRenderPassGPU>(renderPass);
     }
 
     void cOpenGLGraphicsAPI::BindDefaultInputLayout()
@@ -910,43 +911,43 @@ namespace harpy
         glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 32, (void*)20);
     }
 
-    void cOpenGLGraphicsAPI::BindBlendMode(const cBlendMode& blendMode)
+    void cOpenGLGraphicsAPI::BindBlendMode(const sBlendMode& blendMode)
     {
-        for (usize i = 0; i < blendMode._factorCount; i++)
+        for (usize i = 0; i < blendMode.factorCount; i++)
         {
             GLuint srcFactor = GL_ZERO;
             GLuint dstFactor = GL_ZERO;
 
-            switch (blendMode._srcFactors[i])
+            switch (blendMode.srcFactors[i])
             {
-                case cBlendMode::eFactor::ONE: srcFactor = GL_ONE; break;
-                case cBlendMode::eFactor::SRC_COLOR: srcFactor = GL_SRC_COLOR; break;
-                case cBlendMode::eFactor::INV_SRC_COLOR: srcFactor = GL_ONE_MINUS_SRC_COLOR; break;
-                case cBlendMode::eFactor::SRC_ALPHA: srcFactor = GL_SRC_ALPHA; break;
-                case cBlendMode::eFactor::INV_SRC_ALPHA: srcFactor = GL_ONE_MINUS_SRC_ALPHA; break;
+                case sBlendMode::eFactor::ONE: srcFactor = GL_ONE; break;
+                case sBlendMode::eFactor::SRC_COLOR: srcFactor = GL_SRC_COLOR; break;
+                case sBlendMode::eFactor::INV_SRC_COLOR: srcFactor = GL_ONE_MINUS_SRC_COLOR; break;
+                case sBlendMode::eFactor::SRC_ALPHA: srcFactor = GL_SRC_ALPHA; break;
+                case sBlendMode::eFactor::INV_SRC_ALPHA: srcFactor = GL_ONE_MINUS_SRC_ALPHA; break;
             }
 
-            switch (blendMode._dstFactors[i])
+            switch (blendMode.dstFactors[i])
             {
-                case cBlendMode::eFactor::ONE: dstFactor = GL_ONE; break;
-                case cBlendMode::eFactor::SRC_COLOR: dstFactor = GL_SRC_COLOR; break;
-                case cBlendMode::eFactor::INV_SRC_COLOR: dstFactor = GL_ONE_MINUS_SRC_COLOR; break;
-                case cBlendMode::eFactor::SRC_ALPHA: dstFactor = GL_SRC_ALPHA; break;
-                case cBlendMode::eFactor::INV_SRC_ALPHA: dstFactor = GL_ONE_MINUS_SRC_ALPHA; break;
+                case sBlendMode::eFactor::ONE: dstFactor = GL_ONE; break;
+                case sBlendMode::eFactor::SRC_COLOR: dstFactor = GL_SRC_COLOR; break;
+                case sBlendMode::eFactor::INV_SRC_COLOR: dstFactor = GL_ONE_MINUS_SRC_COLOR; break;
+                case sBlendMode::eFactor::SRC_ALPHA: dstFactor = GL_SRC_ALPHA; break;
+                case sBlendMode::eFactor::INV_SRC_ALPHA: dstFactor = GL_ONE_MINUS_SRC_ALPHA; break;
             }
 
             glBlendFunci(i, srcFactor, dstFactor);
         }
     }
 
-    void cOpenGLGraphicsAPI::BindDepthMode(const cDepthMode& blendMode)
+    void cOpenGLGraphicsAPI::BindDepthMode(const sDepthMode& blendMode)
     {
-        if (blendMode._useDepthTest == K_TRUE)
+        if (blendMode.useDepthTest == K_TRUE)
             glEnable(GL_DEPTH_TEST);
         else
             glDisable(GL_DEPTH_TEST);
 
-        if (blendMode._useDepthWrite == K_TRUE)
+        if (blendMode.useDepthWrite == K_TRUE)
             glDepthMask(GL_TRUE);
         else
             glDepthMask(GL_FALSE);

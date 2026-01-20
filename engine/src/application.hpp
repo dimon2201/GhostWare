@@ -53,6 +53,15 @@ namespace harpy
         types::usize maxPhysicsControllerCount = 8;
         types::usize maxSoundCount = 65536;
         types::usize maxEventPerTypeCount = 8192;
+        types::usize maxRenderOpaqueInstanceCount = 65536;
+        types::usize maxRenderTransparentInstanceCount = 65536;
+        types::usize maxRenderTextInstanceCount = 8192;
+        types::usize maxRenderMaterialCount = 256;
+        types::usize maxRenderLightCount = 256;
+        types::usize maxRenderTextureAtlasTextureCount = 8192;
+        types::usize vertexBufferSize = 64 * 1024 * 1024;
+        types::usize indexBufferSize = 64 * 1024 * 1024;
+
     };
 
     class iApplication : public iObject

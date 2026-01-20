@@ -19,6 +19,7 @@ namespace harpy
 
         void Open(const std::string& path, types::boolean isText);
 
+        inline void* GetData() const;
         inline cDataBuffer* GetBuffer() const { return _data; }
 
     private:

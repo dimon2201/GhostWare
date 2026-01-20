@@ -13,6 +13,7 @@ namespace harpy
 {
     class cApplication;
     class cTextureAtlasTexture;
+    class cRenderPass;
 
     class cGPUResource : public iObject
     {
@@ -126,29 +127,23 @@ namespace harpy
 
         friend class cOpenGLGraphicsAPI;
 
+        inline std::vector<cTexture*>& GetColorAttachments() const { return _colorAttachments; }
+        inline cTexture* GetDepthAttachment() const { return _depthAttachment; }
+        inline void SetDepthAttachment(cTexture* attachment) { _depthAttachment = attachment; }
+
     private:
-        std::vector<cTexture*> _colorAttachments = {};
+        mutable std::vector<cTexture*> _colorAttachments = {};
         cTexture* _depthAttachment = nullptr;
     };
 
-    class cDepthMode : public iObject
+    struct sDepthMode
     {
-        HARPY_OBJECT(cDepthMode)
-
-        friend class cOpenGLGraphicsAPI;
-
-    private:
-        types::boolean _useDepthTest = types::K_TRUE;
-        types::boolean _useDepthWrite = types::K_TRUE;
+        types::boolean useDepthTest = types::K_TRUE;
+        types::boolean useDepthWrite = types::K_TRUE;
     };
 
-    class cBlendMode : public iObject
+    struct sBlendMode
     {
-        HARPY_OBJECT(cBlendMode)
-
-        friend class cOpenGLGraphicsAPI;
-
-    public:
         enum class eFactor
         {
             ZERO = 0,
@@ -159,43 +154,48 @@ namespace harpy
             INV_SRC_ALPHA = 5
         };
 
-    private:
-        types::usize _factorCount = 0;
-        eFactor _srcFactors[8] = { eFactor::ZERO };
-        eFactor _dstFactors[8] = { eFactor::ZERO };
+        types::usize factorCount = 0;
+        eFactor srcFactors[8] = { eFactor::ZERO };
+        eFactor dstFactors[8] = { eFactor::ZERO };
     };
 
-    class cRenderPass : public iObject
+    struct sRenderPassDescriptor
     {
-        HARPY_OBJECT(cRenderPass)
+        eCategory inputVertexFormat = eCategory::VERTEX_BUFFER_FORMAT_NONE;
+        std::vector<cBuffer*> inputBuffers = {};
+        std::vector<cTexture*> inputTextures = {};
+        std::vector<std::string> inputTextureNames = {};
+        std::vector<cTextureAtlasTexture*> inputTextureAtlasTextures = {};
+        std::vector<std::string> inputTextureAtlasTextureNames = {};
+        eCategory shaderRenderPath = eCategory::RENDER_PATH_OPAQUE;
+        std::string shaderVertexPath = "";
+        std::string shaderFragmentPath = "";
+        std::string shaderVertexFunc = "";
+        std::string shaderFragmentFunc = "";
+        cShader* shaderBase = nullptr;
+        sDepthMode depthMode;
+        sBlendMode blendMode;
+        glm::vec4 viewport = glm::vec4(0.0f);
+    };
+
+    class cRenderPassGPU : public iObject
+    {
+        HARPY_OBJECT(cRenderPassGPU)
 
         friend class cOpenGLGraphicsAPI;
 
     public:
-        struct sDescriptor
-        {
-            cVertexArray* _vertexArray = nullptr;
-            eCategory _inputVertexFormat = eCategory::VERTEX_BUFFER_FORMAT_NONE;
-            std::vector<cBuffer*> _inputBuffers = {};
-            std::vector<cTexture*> _inputTextures = {};
-            std::vector<std::string> _inputTextureNames = {};
-            std::vector<cTextureAtlasTexture*> _inputTextureAtlasTextures = {};
-            std::vector<std::string> _inputTextureAtlasTextureNames = {};
-            cShader* _shader = nullptr;
-            cShader* _shaderBase = nullptr;
-            eCategory _shaderRenderPath = eCategory::RENDER_PATH_OPAQUE;
-            std::string _shaderVertexPath = "";
-            std::string _shaderFragmentPath = "";
-            std::string _shaderVertexFunc = "";
-            std::string _shaderFragmentFunc = "";
-            cRenderTarget* _renderTarget = nullptr;
-            cDepthMode _depthMode;
-            cBlendMode _blendMode;
-            glm::vec4 _viewport = glm::vec4(0.0f);
-        };
+        explicit cRenderPassGPU(cContext* context, cVertexArray* vertexArray, cShader* shader, cRenderTarget* renderTarget);
+        virtual ~cRenderPassGPU() override final = default;
+        
+        inline cVertexArray* GetVertexArray() const { return _vertexArray; }
+        inline cShader* GetShader() const { return _shader; }
+        inline cRenderTarget* GetRenderTarget() const { return _renderTarget; }
 
     private:
-        sDescriptor _desc;
+        cVertexArray* _vertexArray = nullptr;
+        cShader* _shader = nullptr;
+        cRenderTarget* _renderTarget = nullptr;
     };
 
     class iGraphicsAPI : public iObject
@@ -206,7 +206,7 @@ namespace harpy
         explicit iGraphicsAPI(cContext* context) : iObject(context) {}
         virtual ~iGraphicsAPI() = default;
 
-        virtual cBuffer* CreateBuffer(types::usize byteSize, cBuffer::eType type, const void* data) = 0;
+        virtual cBuffer* CreateBuffer(types::usize byteSize, cBuffer::eType type, types::s32 slot, const void* data) = 0;
         virtual void BindBuffer(const cBuffer* buffer) = 0;
 		virtual void BindBufferNotVAO(const cBuffer* buffer) = 0;
         virtual void UnbindBuffer(const cBuffer* buffer) = 0;
@@ -240,13 +240,13 @@ namespace harpy
         virtual void BindRenderTarget(const cRenderTarget* renderTarget) = 0;
         virtual void UnbindRenderTarget() = 0;
         virtual void DestroyRenderTarget(cRenderTarget* renderTarget) = 0;
-        virtual cRenderPass* CreateRenderPass(const cRenderPass::sDescriptor& descriptor) = 0;
+        virtual cRenderPassGPU* CreateRenderPass(const sRenderPassDescriptor* desc) = 0;
         virtual void BindRenderPass(const cRenderPass* renderPass, cShader* customShader = nullptr) = 0;
         virtual void UnbindRenderPass(const cRenderPass* renderPass) = 0;
-        virtual void DestroyRenderPass(cRenderPass* renderPass) = 0;
+        virtual void DestroyRenderPass(cRenderPassGPU* renderPass) = 0;
         virtual void BindDefaultInputLayout() = 0;
-        virtual void BindDepthMode(const cDepthMode& blendMode) = 0;
-        virtual void BindBlendMode(const cBlendMode& blendMode) = 0;
+        virtual void BindDepthMode(const sDepthMode& blendMode) = 0;
+        virtual void BindBlendMode(const sBlendMode& blendMode) = 0;
         virtual void Viewport(const glm::vec4& viewport) = 0;
         virtual void ClearColor(const glm::vec4& color) = 0;
         virtual void ClearDepth(types::f32 depth) = 0;
@@ -265,7 +265,7 @@ namespace harpy
         explicit cOpenGLGraphicsAPI(cContext* context);
         virtual ~cOpenGLGraphicsAPI() override final;
 
-        virtual cBuffer* CreateBuffer(types::usize byteSize, cBuffer::eType type, const void* data) override final;
+        virtual cBuffer* CreateBuffer(types::usize byteSize, cBuffer::eType type, types::s32 slot, const void* data) override final;
         virtual void BindBuffer(const cBuffer* buffer) override final;
         virtual void BindBufferNotVAO(const cBuffer* buffer) override final;
         virtual void UnbindBuffer(const cBuffer* buffer) override final;
@@ -299,13 +299,13 @@ namespace harpy
         virtual void BindRenderTarget(const cRenderTarget* renderTarget) override final;
         virtual void UnbindRenderTarget() override final;
         virtual void DestroyRenderTarget(cRenderTarget* renderTarget) override final;
-        virtual cRenderPass* CreateRenderPass(const cRenderPass::sDescriptor& descriptor) override final;
+        virtual cRenderPassGPU* CreateRenderPass(const sRenderPassDescriptor* desc) override final;
         virtual void BindRenderPass(const cRenderPass* renderPass, cShader* customShader = nullptr) override final;
         virtual void UnbindRenderPass(const cRenderPass* renderPass) override final;
-        virtual void DestroyRenderPass(cRenderPass* renderPass) override final;
+        virtual void DestroyRenderPass(cRenderPassGPU* renderPass) override final;
         virtual void BindDefaultInputLayout() override final;
-        virtual void BindDepthMode(const cDepthMode& blendMode) override final;
-        virtual void BindBlendMode(const cBlendMode& blendMode) override final;
+        virtual void BindDepthMode(const sDepthMode& blendMode) override final;
+        virtual void BindBlendMode(const sBlendMode& blendMode) override final;
         virtual void Viewport(const glm::vec4& viewport) override final;
         virtual void ClearColor(const glm::vec4& color) override final;
         virtual void ClearDepth(types::f32 depth) override final;

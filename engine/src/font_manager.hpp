@@ -72,6 +72,8 @@ namespace harpy
         explicit cText(cContext* context);
         virtual ~cText() override final;
 
+        inline cFontFace* GetFont() const { return _font; }
+        inline const std::string& GetText() const { return _text; }
         inline void SetFont(cFontFace* font) { _font = font; }
         inline void SetText(const std::string& text) { _text = text; }
 
