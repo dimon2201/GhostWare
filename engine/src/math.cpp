@@ -94,8 +94,19 @@ namespace triton
 		return glm::radians(degrees);
 	}
 
-	quaternion cMath::AngleAxis(f32 angle, const vector3& axis)
+	cpuword cMath::Hash(const u8* data, usize dataByteSize)
 	{
-		return glm::angleAxis(angle, axis);
+		u64 hash = 0x9e3779b97f4a7c15ull;
+		while (dataByteSize >= 4)
+		{
+			hash = (hash ^ (((u64)(*data++) * 0x9e3779b9ull) >> 32)) * 0xbf58476d1ce4e5b9ull;
+			byteSize -= 4;
+		}
+
+		u32 tail = 0;
+		memcpy(&tail, data, byteSize);
+		hash ^= tail;
+
+		return (cpuword)hash;
 	}
 }

@@ -2,12 +2,12 @@
 
 #pragma once
 
-#include "object.hpp"
-#include "types.hpp"
 #include "../../thirdparty/glm/glm/glm.hpp"
 #include "../../thirdparty/glm/glm/gtc/matrix_transform.hpp"
 #include "../../thirdparty/glm/glm/gtc/quaternion.hpp"
 #include "../../thirdparty/glm/glm/gtx/quaternion.hpp"
+#include "object.hpp"
+#include "types.hpp"
 
 namespace triton
 {
@@ -100,5 +100,6 @@ namespace triton
 		virtual ~cMath() override final = default;
 
 		static types::f32 DegreesToRadians(types::f32 degrees);
+		static types::cpuword Hash(const types::u8* data, types::usize dataByteSize);
 	};
 }
