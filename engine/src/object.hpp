@@ -59,13 +59,12 @@ namespace triton
 		void Send(eEventType type, cDataBuffer* data);
 
 		inline cContext* GetContext() const { return _context; }
-		inline const cTag& GetID() const { return _identifier->GetID(); }
-		inline cIdentifier* GetIdentifier() const { return _identifier; }
+		inline const cTag& GetID() const { return _id; }
 
 	protected:
 		cContext* _context = nullptr;
 		types::boolean _occupied = types::K_FALSE;
 		types::s64 _allocatorIndex = 0;
-		cIdentifier* _identifier = nullptr;
+		cTag _id;
 	};
 }

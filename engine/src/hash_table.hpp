@@ -107,7 +107,7 @@ namespace triton
 		ce.chunk = elementChunkIndex;
 		ce.position = elementLocalPosition;
 
-		const uint32_t hash = Hash(object->GetIdentifier()->GetID(), _hashMask);
+		const uint32_t hash = Hash(object->GetID(), _hashMask);
 		_hashTable[hash] = ce;
 
 		return object;
@@ -122,7 +122,7 @@ namespace triton
 		if (ce.chunk < _chunkCount && ce.position < chunkObjectCount)
 		{
 			const T* object = &_chunks[ce.chunk][ce.position];
-			if (key.Compare(object->GetIdentifier()->GetID()))
+			if (key.Compare(object->GetID()))
 				return (const T*)object;
 		}
 
@@ -131,7 +131,7 @@ namespace triton
 			for (types::usize j = 0; j < _objectCountPerChunk; j++)
 			{
 				const T* object = &_chunks[i][j];
-				if (key.Compare(object->GetIdentifier()->GetID()))
+				if (key.Compare(object->GetID()))
 					return (const T*)object;
 			}
 		}
@@ -146,7 +146,7 @@ namespace triton
 		{
 			for (types::usize j = 0; j < _objectCountPerChunk; j++)
 			{
-				if (key.Compare(_chunks[i][j]->GetIdentifier()->GetID()))
+				if (key.Compare(_chunks[i][j]->GetID()))
 				{
 					const types::u32 lastChunkIndex = GetChunkIndex(_elementCount - 1);
 					const types::usize lastChunkObjectCount = GetChunkLocalPosition(lastChunkIndex, _elementCount);
