@@ -17,7 +17,7 @@ namespace triton
 	template <typename T>
 	class cFactoryObject : public cObjectPtr
 	{
-		friend class cFactory;
+		friend class cFactory<T>;
 
 		types::boolean allocated = types::K_FALSE;
 	};
