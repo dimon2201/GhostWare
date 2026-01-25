@@ -8,7 +8,7 @@
 #include <functional>
 #include <vector>
 #include "object.hpp"
-#include "id_vec.hpp"
+#include "cache.hpp"
 #include "types.hpp"
 
 namespace triton
@@ -51,6 +51,6 @@ namespace triton
         void Send(eEventType type, cDataBuffer* data);
 
     private:
-        std::unordered_map<eEventType, std::shared_ptr<cIdVector<cEventHandler>>> _listeners;
+        std::unordered_map<eEventType, std::shared_ptr<cCache<cEventHandler>>> _listeners;
     };
 }

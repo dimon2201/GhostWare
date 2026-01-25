@@ -28,7 +28,7 @@ namespace triton
         if (listener == _listeners.end())
         {
             const sCapabilities* caps = _context->GetSubsystem<cEngine>()->GetApplication()->GetCapabilities();
-            _listeners.insert({ type, std::make_shared<cIdVector<cEventHandler>>(_context, caps->maxEventPerTypeCount) });
+            _listeners.insert({ type, std::make_shared<cCache<cEventHandler>>(_context, caps->maxEventPerTypeCount) });
         }
 
         _listeners[type]->Add(receiver->GetID(), _context, receiver, type, std::move(function));
