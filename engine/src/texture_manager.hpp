@@ -63,6 +63,6 @@ namespace triton
     protected:
         iGraphicsAPI* _gfx = nullptr;
         cTexture* _atlas = nullptr;
-        cIdVector<cTextureAtlasTexture> _textures;
+        cCache<cTextureAtlasTexture> _textures;
     };
 }
