@@ -148,6 +148,12 @@ namespace triton
         inline cVertexArray* GetVertexArray() const { return _renderPass->GetVertexArray(); }
         inline cShader* GetShader() const { return _renderPass->GetShader(); }
         inline cRenderTarget* GetRenderTarget() const { return _renderPass->GetRenderTarget(); }
+        inline const sViewport& GetViewport() const { return _desc->viewport; }
+        inline const std::vector<cBuffer*>& GetInputBuffers() const { return _desc->inputBuffers; }
+        inline const std::vector<cTexture*>& GetInputTextures() const { return _desc->inputTextures; }
+        inline const std::vector<std::string>& GetInputTextureNames() const { return _desc->inputTextureNames; }
+        inline const sBlendMode& GetBlendMode() const { return _desc->blendMode; }
+        inline const sDepthMode& GetDepthMode() const { return _desc->depthMode; }
         inline cRenderPassGPU* GetRenderPassGPU() const { return _renderPass; }
         inline void SetInputTexture(types::usize textureIndex, cTexture* texture) { _desc->inputTextures[textureIndex] = texture; }
 
