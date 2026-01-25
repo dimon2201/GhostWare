@@ -105,6 +105,52 @@ namespace triton
 		return cVector3(_vec);
 	}
 
+	cVector4::cVector4(const glm::vec4& vec) : _vec(vec) {}
+
+	cVector4::cVector4(f32 value) : _vec(glm::vec4(value, value, value, value)) {}
+
+	cVector4::cVector4(f32 x, f32 y, f32 z, f32 w) : _vec(glm::vec3(x, y, z, w)) {}
+
+	cVector4 cVector4::operator+(const cVector4& vec) const
+	{
+		return cVector4(_vec + vec);
+	}
+
+	cVector4 cVector4::operator-(const cVector4& vec) const
+	{
+		return cVector4(_vec - vec);
+	}
+
+	cVector4 cVector4::operator*(const cVector4& vec) const
+	{
+		return cVector4(_vec * vec);
+	}
+
+	cVector4 cVector4::operator/(const cVector4& vec) const
+	{
+		return cVector4(_vec / vec);
+	}
+
+	cVector4 cVector4::operator+(f32 val) const
+	{
+		return cVector4(_vec + val);
+	}
+
+	cVector4 cVector4::operator-(f32 val) const
+	{
+		return cVector4(_vec - val);
+	}
+
+	cVector4 cVector4::operator*(f32 val) const
+	{
+		return cVector4(_vec * val);
+	}
+
+	cVector4 cVector4::operator/(f32 val) const
+	{
+		return cVector4(_vec / val);
+	}
+
 	cQuaternion::cQuaternion(const glm::quat& quat) : _quat(quat) {}
 
 	cQuaternion::cQuaternion(f32 angle, const cVector3& axis) : _quat(glm::angleAxis(angle, glm::vec3(axis.GetX(), axis.GetY(), axis.GetZ()))) {}

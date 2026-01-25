@@ -72,6 +72,40 @@ namespace triton
 		glm::vec3 _vec = glm::vec3(0.0f);
 	};
 
+	class cVector4
+	{
+	public:
+		explicit cVector4(const glm::vec4& vec);
+		explicit cVector4(types::f32 value);
+		explicit cVector4(types::f32 x, types::f32 y, types::f32 z, types::f32 w);
+		~cVector4() = default;
+
+		cVector4 operator+(const cVector4& vec) const;
+		cVector4 operator-(const cVector4& vec) const;
+		cVector4 operator*(const cVector4& vec) const;
+		cVector4 operator/(const cVector4& vec) const;
+		cVector4 operator+(types::f32 val) const;
+		cVector4 operator-(types::f32 val) const;
+		cVector4 operator*(types::f32 val) const;
+		cVector4 operator/(types::f32 val) const;
+
+		inline types::f32 GetX() const { return _vec.x; }
+		inline types::f32 GetY() const { return _vec.y; }
+		inline types::f32 GetZ() const { return _vec.z; }
+		inline types::f32 GetW() const { return _vec.w; }
+		inline void SetX(types::f32 value) { _vec.x = value; }
+		inline void SetY(types::f32 value) { _vec.y = value; }
+		inline void SetZ(types::f32 value) { _vec.z = value; }
+		inline void SetW(types::f32 value) { _vec.w = value; }
+		inline void AddX(types::f32 value) { _vec.x += value; }
+		inline void AddY(types::f32 value) { _vec.y += value; }
+		inline void AddZ(types::f32 value) { _vec.z += value; }
+		inline void AddW(types::f32 value) { _vec.w += value; }
+
+	private:
+		glm::vec4 _vec = glm::vec4(0.0f);
+	};
+
 	class cQuaternion
 	{
 	public:
