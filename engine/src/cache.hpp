@@ -2,9 +2,8 @@
 
 #pragma once
 
-#include "map.hpp"
+#include "hash_table.hpp"
 #include "context.hpp"
-#include "object.hpp"
 #include "types.hpp"
 
 namespace triton
