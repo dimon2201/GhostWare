@@ -20,6 +20,9 @@ namespace triton
 		template <typename T, typename... Args>
 		T* Create(Args&&... args);
 
+		template <typename T, typename... Args>
+		T* Create(types::u8* ptr, types::u32 index, Args&&... args);
+
 		template <typename T>
 		void Destroy(T* object);
 
@@ -51,6 +54,17 @@ namespace triton
 		const auto it = _factories.find(type);
 		if (it != _factories.end())
 			return ((cFactory<T>*)it->second.get())->Create(std::forward<Args>(args)...);
+		else
+			return nullptr;
+	}
+
+	template <typename T, typename... Args>
+	T* cContext::Create(types::u8* ptr, types::u32 index, Args&&... args)
+	{
+		const ClassType type = T::GetTypeStatic();
+		const auto it = _factories.find(type);
+		if (it != _factories.end())
+			return ((cFactory<T>*)it->second.get())->Create(ptr, index, std::forward<Args>(args)...);
 		else
 			return nullptr;
 	}
